@@ -75,8 +75,6 @@ module OKF
       # rather than swallowed — `okf/pro.rb` refuses an under-floor Ruby with
       # `exit 2`, and a rescue that turned that refusal into an error report
       # would be the fail-open this method exists to close.
-      #
-      # rubocop:disable Lint/RescueException
       def call(argv)
         verb = argv.first.to_s
 
@@ -93,10 +91,9 @@ module OKF
         status.is_a?(Integer) ? status : blocked("returned #{status.inspect} instead of an exit status")
       rescue ::SystemExit
         raise
-      rescue ::Exception => e
+      rescue ::Exception => e # rubocop:disable Lint/RescueException
         blocked("#{e.class}: #{e.message}")
       end
-      # rubocop:enable Lint/RescueException
 
       private
 
