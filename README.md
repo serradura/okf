@@ -86,8 +86,8 @@ different. None of the others is built for curated, durable team knowledge:
 The last two rows are this gem's job.
 
 [OKF][okf] is an open, vendor-neutral format (Google Cloud, 2026). This
-repository is a complete implementation of it — skill, CLI, library, graph and
-MCP server — distributed as a gem, a Docker image, and a Claude Code plugin.
+repository is a complete implementation of it, distributed as a gem, a Docker
+image, and a Claude Code plugin.
 
 [okf]: https://cloud.google.com/blog/products/data-analytics/how-the-open-knowledge-format-can-improve-data-sharing
 
@@ -158,9 +158,9 @@ One install carries the whole workflow, and that is the point:
 
 Three sibling gems extend that same command rather than adding another one:
 
-- **`okf mcp`** ([okf-mcp](gems/okf-mcp/README.md)) serves your bundles to any MCP host — fourteen read tools, over stdio or Streamable HTTP;
-- **`okf tui`** ([okf-tui](gems/okf-tui/README.md)) reads one bundle or every registered one, in a full-screen terminal UI;
-- **`okf pro`** ([okf-pro](gems/okf-pro/README.md)) writes an agent's knowledge repository — bundle, hooks, pre-commit, CI, skill — and then enforces it at three doors.
+- **`okf mcp`** ([okf-mcp](gems/okf-mcp/README.md)), so the knowledge is not stuck in whichever terminal wrote it: any MCP host reads it with no shell and nothing pasted into context — fourteen read tools, over stdio or Streamable HTTP;
+- **`okf tui`** ([okf-tui](gems/okf-tui/README.md)), so looking around costs a keystroke instead of four commands: six views over one bundle or every registered one, and you can read one while searching all of them;
+- **`okf pro`** ([okf-pro](gems/okf-pro/README.md)), so the practice holds on the days nobody is watching: it writes an agent's knowledge repository and then refuses to let it rot, at three doors that each fail closed.
 
 `gem install okf-pro` and you type `okf pro`. Packaging multiplies; the
 interface does not, and a sibling ships no second binary to learn.
