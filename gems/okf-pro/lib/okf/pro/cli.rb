@@ -21,7 +21,7 @@ module OKF
         "guard-verified" => ->(event) { Guards.guard_verified(event) },
         "journal-guard" => ->(event) { Guards.journal_guard(event) },
         "shell-guard" => ->(event) { ShellGuard.check(event) },
-        "check-okf" => ->(event) { Conformance.check(Target.for(event)) },
+        "check-okf" => ->(event) { Conformance.check(Target.for(event), scope: :edit) },
         "cap-check" => ->(event) { Budget.cap_check(Target.for(event)) },
         "reconcile-search" => ->(event) { Reconcile.search(Target.for(event), event) },
         "post-edit" => ->(event) { CLI.post_edit(event) },
@@ -154,7 +154,7 @@ module OKF
         # covers count — an Edit to a concept body is judgment and always will
         # be, and counting it would report the system working as friction.
         Friction.record(target.root, "edit", target.rel) if target && Friction.covered_path?(target.rel)
-        Conformance.check(target) + Budget.cap_check(target) + Reconcile.search(target, event)
+        Conformance.check(target, scope: :edit) + Budget.cap_check(target) + Reconcile.search(target, event)
       end
 
       def run(argv, stdin: $stdin, stdout: $stdout, stderr: $stderr)

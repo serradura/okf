@@ -6,12 +6,36 @@ module OKF
     # answer the same questions at the cost of two interpreter boots per edit;
     # the analyzers are pure and take the bundle directly.
     module Conformance
+      # The four findings that are questions about a SET of files, not about
+      # the one just written. An index entry is decided by the concept it
+      # names; an orphan by whether anything else in the bundle links it. At
+      # the per-edit door they are therefore answered against a write set that
+      # is incomplete by definition — the concept an index will list does not
+      # exist yet while the index is being written, and no write order avoids
+      # that, because the reverse order makes the concept the orphan.
+      #
+      # Three are the linter's and one is the validator's. They are one list
+      # because they share a property, not a producer.
+      SET_SCOPED = %i[broken_link broken_index_entry orphan not_in_index].freeze
+
       module_function
 
-      def check(target)
+      # `scope:` is `:all` — every question, for the doors that see the whole
+      # write set — or `:edit`, which withholds the four above and says how
+      # many it withheld.
+      def check(target, scope: :all)
         return [] if target.nil?
 
-        result = ::OKF::Bundle::Validator.call(target.bundle)
+        findings(target.bundle, rel: target.rel, scope: scope)
+      end
+
+      # The same questions asked of a bundle that is already parsed, and of no
+      # file in particular. The Stop gate holds one parse and must not pay for
+      # a second — `closing_test.rb` pins the count at one — and it is asking
+      # about the write set rather than about an edit, which is why `rel:` is
+      # optional here and required nowhere.
+      def findings(bundle, rel: nil, scope: :all)
+        result = ::OKF::Bundle::Validator.call(bundle)
         unless result.valid?
           lines = result.errors.map { |e| "  #{e[:path]}: #{e[:message]}" }
           return [ "okf validate failed after your edit:\n#{lines.join("\n")}" ]
@@ -34,7 +58,8 @@ module OKF
         # They warn rather than refuse: §9's separation is the kernel's, and a
         # gate that turned the validator's warnings into errors would be
         # overruling it from outside.
-        soft = warn_lines(result.warnings)
+        soft_warnings, deferred = sift(result.warnings, scope)
+        soft = warn_lines(soft_warnings)
 
         # WHAT THIS GATE RUNS, AND WHY IT SAYS SO.
         #
@@ -63,9 +88,12 @@ module OKF
         # `skipped_checks` is then empty, and `confession` below is a live guard
         # rather than a formality: the day okf adds a third clock-gated check,
         # this gate reports it instead of quietly not running it.
-        report = ::OKF::Bundle::Linter.call(target.bundle, today: Date.today, except: [ :stale ])
-        notes = confession(report) + soft
-        return notes if report.healthy? && notes.empty?
+        report = ::OKF::Bundle::Linter.call(bundle, today: Date.today, except: [ :stale ])
+        lint, held = sift(report.warnings, scope)
+        deferred += held
+
+        notes = confession(report) + deferral(deferred) + soft
+        return notes if lint.empty? && notes.empty?
 
         # Warnings only. Lint's `:info` findings are observations, and a gate
         # that refuses on an observation stops being read as a refusal.
@@ -79,14 +107,44 @@ module OKF
         # pre-existing warning elsewhere used to arrive under the heading
         # "your edit" on every edit in the bundle, and a gate that blames
         # you for what you did not do is a gate people switch off.
-        mine, theirs = report.warnings.partition { |w| same_file?(w[:path], target.rel) }
         parts = notes
-        parts << "okf lint flagged your edit:\n#{format_warnings(mine)}" unless mine.empty?
-        unless theirs.empty?
-          parts << "okf lint findings elsewhere in the bundle — pre-existing, or a neighbour " \
-                   "your edit affected:\n#{format_warnings(theirs)}"
+        if rel.nil?
+          # No edit to be blamed for or exonerated from. The Stop gate asks
+          # about the write set, so "yours" and "elsewhere" are not a
+          # distinction it can draw, and pretending otherwise would file every
+          # finding under a heading that says someone else did it.
+          parts << "okf lint findings across the bundle:\n#{format_warnings(lint)}"
+        else
+          mine, theirs = lint.partition { |w| same_file?(w[:path], rel) }
+          parts << "okf lint flagged your edit:\n#{format_warnings(mine)}" unless mine.empty?
+          unless theirs.empty?
+            parts << "okf lint findings elsewhere in the bundle — pre-existing, or a neighbour " \
+                     "your edit affected:\n#{format_warnings(theirs)}"
+          end
         end
         [ parts.join("\n") ]
+      end
+
+      # Splits a warning list into what this scope answers and a count of what
+      # it withheld. The count is what `deferral` confesses; the findings
+      # themselves are not carried, because the door that can answer them
+      # recomputes them rather than trusting a hand-off.
+      def sift(warnings, scope)
+        return [ warnings, 0 ] unless scope == :edit
+
+        kept, held = warnings.partition { |w| !SET_SCOPED.include?(w[:check]) }
+        [ kept, held.size ]
+      end
+
+      # Withholding is not dropping, and the difference has to be audible. A
+      # gate that silently stopped asking four questions would have converted
+      # "unchecked" into "checked and fine" — the one failure this file's
+      # whole design is against.
+      def deferral(count)
+        return [] if count.zero?
+
+        [ "#{count} finding(s) need the whole write set and were deferred to the Stop gate " \
+          "and `okf pro audit`, which see every file this edit will be part of." ]
       end
 
       # What the linter did not run, said out loud. Empty in normal operation

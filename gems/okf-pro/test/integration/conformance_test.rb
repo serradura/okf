@@ -55,6 +55,93 @@ class ConformanceTest < OKF::Pro::TestCase
     end
   end
 
+  # ── what one edit can and cannot be asked ─────────────────────────────────
+
+  # A tree carrying all four findings that need the whole write set: an index
+  # entry pointing at a concept that is not written yet (`broken_index_entry`,
+  # and the same link seen by the validator as `broken_link`), and a concept no
+  # index lists and nothing links (`not_in_index`, `orphan`).
+  def deferrable(b)
+    b.concept("glossary/term.md", type: "Term")
+    b.concept("learnings/lonely.md", type: "Learning")
+    dir = b.path # finishes the build; the two indexes below have to survive it
+    b.write("learnings/index.md", "# Learnings\n\nNothing listed here yet.\n")
+    b.write("glossary/index.md",
+      "# Glossary\n\n* [term](term.md) - fixture.\n* [ghost](ghost.md) - not there.\n")
+    OKF::Pro::Target.for(edit_event(dir, "glossary/index.md"))
+  end
+
+  # All four are questions about a SET of files, asked after one of them. No
+  # write order avoids them — the concept an index will list does not exist
+  # while the index is being written — so at the per-edit door every one of
+  # them is noise by construction.
+  def test_the_set_scoped_findings_are_reported_whole_and_withheld_per_edit
+    with_bundle do |b|
+      target = deferrable(b)
+
+      whole = OKF::Pro::Conformance.check(target, scope: :all).join("\n")
+      edit = OKF::Pro::Conformance.check(target, scope: :edit).join("\n")
+
+      %w[broken_index_entry orphan not_in_index].each do |check|
+        assert_match(/#{check}/, whole, "the whole-bundle answer owes every finding")
+        refute_match(/#{check}/, edit, "#{check} cannot be answered by one edit")
+      end
+      assert_match(/cross-link target not found/, whole)
+      refute_match(/cross-link target not found/, edit)
+    end
+  end
+
+  # Withholding is not dropping. A gate that quietly stops reporting has
+  # converted "unchecked" into "checked and fine", which is the failure the
+  # contract's third clause names — so the edit door says how many it deferred
+  # and where they will be asked again.
+  def test_the_edit_door_confesses_what_it_deferred
+    with_bundle do |b|
+      answer = OKF::Pro::Conformance.check(deferrable(b), scope: :edit).join("\n")
+
+      assert_match(/4 finding\(s\)/, answer)
+      assert_match(/whole write set/, answer)
+      assert_match(/Stop gate/, answer)
+    end
+  end
+
+  # The pin against over-deferring: a finding one edit CAN answer still refuses
+  # at the edit door. This one is about the file's own frontmatter and needs no
+  # neighbour to decide.
+  def test_a_per_edit_finding_still_speaks_at_the_edit_door
+    with_bundle do |b|
+      b.raw("reference/x.md", <<~MD)
+        ---
+        type: Briefing
+        title: X
+        description: A briefing whose attestation is written as a scalar.
+        generated: { by: claude/opus-5, at: 2026-08-10 }
+        verified: human:rod
+        ---
+
+        # X
+
+        Body long enough to clear the stub threshold, with a link to [the board](/board.md).
+      MD
+      target = OKF::Pro::Target.for(edit_event(b.path, "reference/x.md"))
+
+      answer = OKF::Pro::Conformance.check(target, scope: :edit).join("\n")
+
+      assert_match(/verified should be a mapping or a list of mappings/, answer)
+    end
+  end
+
+  # And nothing deferred is nothing said. A confession that fired on every
+  # clean edit would be the standing warning that carries no information.
+  def test_the_edit_door_is_silent_when_it_deferred_nothing
+    with_bundle do |b|
+      b.concept("glossary/term.md", type: "Term")
+      target = OKF::Pro::Target.for(edit_event(b.path, "glossary/term.md"))
+
+      assert_empty OKF::Pro::Conformance.check(target, scope: :edit)
+    end
+  end
+
   def test_a_nil_target_has_no_opinion
     assert_empty OKF::Pro::Conformance.check(nil)
   end
