@@ -1,5 +1,17 @@
 # Update Log
 
+## 2026-08-30
+
+* **The scaffold verbs go through `parse_flags` too, and the catalogue says so.**
+  [capabilities/verbs](/capabilities/verbs.md) described the family by what it
+  does *not* do: no `dir_argument`, because `setup` into an empty directory is
+  the point. That omission read as an exemption from the parser as well, and it
+  was one. `--help` reached the verb as its destination, so the generator
+  answered the question by running. The paragraph now names both halves, and
+  [testing/adding-a-verb](/testing/adding-a-verb.md) step 5 says it too. **A
+  family defined only by its exception gets extended in the direction of the
+  exception**, and the next reader pays for that.
+
 ## 2026-08-19
 
 * **Every concept declares `generated:`.** The dates are read from git with

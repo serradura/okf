@@ -39,7 +39,9 @@ its caller's typo as a broken bundle; a check that returns 1 is read as
    would make every `okf help` load the whole library — and they are held
    together by a test rather than by discipline.
 5. **Declare its flags** in `FLAGS` if it takes any. Absence means "accepts
-   none", not "is exempt": every reader routes through `parse_flags` either way.
+   none", not "is exempt". Every reader routes through `parse_flags` either
+   way, and so does every scaffold verb — that second half cost a release to
+   become true.
 6. **A writer owes a pure transform.** Compute the new text in `board/edit.rb`
    or `log/edit.rb` — they cannot touch the disk — declare the added, removed
    and moved lines, and let `Conserve` refuse the mismatch. See
