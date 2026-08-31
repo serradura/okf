@@ -5,6 +5,23 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.0] - 2026-08-31
+
+### Changed
+
+- **The `mcp` floor moves to `~> 1.4`**, and nothing in this gem changed for it.
+  `Gemfile.lock` is not committed, so the suite resolves the newest SDK the
+  requirement admits and proves itself against that one. `mcp` 1.4.0 shipped, CI
+  resolved it, and all 324 tests pass against it. A floor that admits an SDK the
+  suite never ran against is the claim the floor test exists to refuse.
+
+  This is the second release to carry that sentence, one SDK version after the
+  first, so the shape is worth naming. The drill fires on a calendar nobody here
+  controls: no commit triggers it, and the branch it turns red is whichever one
+  happens to run CI first after the SDK publishes. The work it asks for is a
+  floor bump with no code behind it, and a release to carry it, because a floor
+  is part of the published contract.
+
 ## [1.3.0] - 2026-08-22
 
 ### Fixed
@@ -429,6 +446,8 @@ rather than pretending to be changes somebody could have seen.
 
 The name reservation on RubyGems: an empty gem, no functionality.
 
+[1.4.0]: https://github.com/serradura/okf/compare/okf-mcp/v1.3.0...okf-mcp/v1.4.0
+[1.3.0]: https://github.com/serradura/okf/compare/okf-mcp/v1.2.1...okf-mcp/v1.3.0
 [1.2.1]: https://github.com/serradura/okf/compare/okf-mcp/v1.2.0...okf-mcp/v1.2.1
 [1.2.0]: https://github.com/serradura/okf/compare/okf-mcp/v1.1.0...okf-mcp/v1.2.0
 [1.1.0]: https://github.com/serradura/okf/compare/okf-mcp/v1.0.0...okf-mcp/v1.1.0
