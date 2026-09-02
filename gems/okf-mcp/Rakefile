@@ -62,6 +62,56 @@ task :set_integration_coverage_dir do
   ENV["OKF_MCP_COVERAGE_NAME"] = "Integration Tests (alone)"
 end
 
+# The floor claim, proven instead of asserted.
+#
+# `design/runtime-dependencies` says the floor "is not a guess about
+# compatibility; it is the oldest version the tests actually pass on" — and
+# until this task, nothing ever ran them there. `gemspec_test` covered the gap
+# by ratcheting the floor up to whatever bundler resolved, which makes the claim
+# true by never supporting anything but the newest SDK. That is a different rule
+# than the one the concept states, and the weaker one. This runs the oldest
+# admissible SDK, which is what the rule always meant.
+#
+# A separate Gemfile rather than a mutated one: `BUNDLE_GEMFILE` is this repo's
+# idiom for "resolve this differently" — okf-pro's AGENTS.md uses it to check
+# against the published kernel — and it leaves the working tree's own resolution
+# untouched, so running this does not change what the next `rake test` sees.
+desc "Run the suite against the OLDEST mcp the gemspec admits, not the newest bundler resolves"
+task "test:sdk_floor" do
+  spec = Dir.chdir(__dir__) { Gem::Specification.load(File.expand_path("okf-mcp.gemspec", __dir__)) }
+  dependency = spec.dependencies.find { |d| d.name == "mcp" }
+  abort "okf-mcp.gemspec declares no mcp dependency" if dependency.nil?
+
+  pin = dependency.requirement.requirements.find { |op, _| op == "~>" }
+  abort "okf-mcp.gemspec declares no `~>` pin on mcp: #{dependency.requirement}" if pin.nil?
+
+  # `~> 1.3` admits 1.3.0 upward, and a two-segment pin names a series rather
+  # than a release. The oldest member of the 1.3 series is 1.3.0 by convention,
+  # and bundler says so loudly if it is not published.
+  floor = pin.last.to_s
+  floor = "#{floor}.0" if floor.count(".") < 2
+
+  gemfile = File.expand_path("Gemfile.sdk-floor", __dir__)
+  File.write(gemfile, "#{File.read(File.expand_path("Gemfile", __dir__))}\ngem \"mcp\", \"#{floor}\"\n")
+  begin
+    puts "== the suite against mcp #{floor}, the oldest #{dependency.requirement} admits =="
+    # `with_unbundled_env` is load-bearing, not hygiene. This task runs under
+    # `bundle exec`, which exports BUNDLE_GEMFILE and RUBYOPT for the *main*
+    # Gemfile; a child that only adds its own BUNDLE_GEMFILE inherits the rest
+    # and re-resolves the main one, rewriting the lockfile of the tree you are
+    # standing in. Measured: the first version of this task left `Gemfile.lock`
+    # pinned at the floor SDK, so the next ordinary `rake test` silently ran
+    # against the floor too — a check that changes what every later check sees.
+    Bundler.with_unbundled_env do
+      env = { "BUNDLE_GEMFILE" => gemfile }
+      sh(env, "bundle install --quiet")
+      sh(env, "bundle exec rake test")
+    end
+  ensure
+    FileUtils.rm_f([ gemfile, "#{gemfile}.lock" ])
+  end
+end
+
 # The last okf release that predates the surfaces this shell now calls —
 # Bundle::RowFilter (memory_backend.rb, server.rb#filter_rows),
 # Concept.effective_status, Concept.fold_tier, and the trust catalog column.

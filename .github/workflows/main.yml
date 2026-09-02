@@ -84,6 +84,15 @@ jobs:
           working-directory: gems/okf-mcp
       - name: Run the default task
         run: bundle exec rake
+      # The matrix axis is Ruby; this is the *dependency* axis, and it needs one
+      # leg rather than a second matrix. `bundler-cache` resolves the newest mcp
+      # the gemspec admits, so every job above proves the ceiling and none of
+      # them proves the floor — which is the half the gemspec actually promises
+      # an adopter. Run on 2.7 because the oldest Ruby with the oldest SDK is
+      # the combination an adopter can reach and nothing else here covers.
+      - name: The suite against the oldest admissible mcp
+        if: matrix.ruby == '2.7'
+        run: bundle exec rake test:sdk_floor
 
   okf-tui:
     name: okf-tui / Ruby ${{ matrix.ruby }}

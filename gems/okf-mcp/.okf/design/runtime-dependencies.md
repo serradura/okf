@@ -28,11 +28,28 @@ kernel holds its own: argue it, do not add it for convenience — and
 
 One rule covers both, and it is the reason the pins are not round numbers.
 
-**`mcp` is pinned pessimistically (`~>`)**, and the suite fails the day the
-lockfile resolves past it. The listen and modern-path tests exercise the
-SEP-2575 wire, which 1.0 and 1.1 never served — against those versions the
-tests fail, so the floor cannot admit them. The floor is not a guess about
-compatibility; it is the oldest version the tests actually pass on.
+**`mcp` is pinned pessimistically (`~>`)**, and the floor is not a guess about
+compatibility. It is the oldest version the tests actually pass on. The listen
+and modern-path tests exercise the SEP-2575 wire, which 1.0 and 1.1 never
+served, so against those versions the tests fail and the floor cannot admit
+them.
+
+`rake test:sdk_floor` is what makes that sentence true rather than hopeful. It
+runs the whole suite against the oldest SDK the pin admits, and CI runs it on
+the floor Ruby. Every other job resolves the *newest* admissible SDK, so without
+that leg the ceiling was proven on seven Rubies and the floor on none — and the
+floor is the half the gemspec promises an adopter.
+
+The gemspec drill used to cover the gap differently, by refusing any floor older
+than the SDK the suite had resolved. That forced the floor up to whatever
+bundler fetched, which makes the claim true by never admitting anything but the
+newest release: an upstream publication nobody here asked for narrowed what an
+adopter may install. It fired twice that way, and on both occasions the suite
+passed against the very floor it was raising away from. **A rule that is kept by
+shrinking what it has to cover is not being kept.** The drill now asks whether
+the requirement *admits* the version CI ran, because a requirement that excludes
+it would mean every assertion above it proved a resolution the gem refuses to
+install with.
 
 **The `okf` floor may lead the kernel checkout but never lag it.** It names the
 kernel version that ships what this shell rides — `Search.prepare/with/across`,
