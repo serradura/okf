@@ -8,34 +8,40 @@ All notable changes to okf-pro are documented here. The format follows
 
 ### Changed
 
-- **Rule 1 stops firing on its own recall.** `reconcile-search` was measured
-  blocking on `why`, `what`, `that`, `its`, `move`, `2` and `0`, returning five
-  concepts each time, on every write. A prompt that appears on every write
-  carries the same information as a prompt that never appears — and Rule 1 is
-  the one gate whose entire job is to make somebody go and read something. Three
-  narrowings, none of which touches what the rule asks:
+- **Rule 1 no longer fires on common words.** `reconcile-search` reads the words
+  in a new concept's filename, searches the bundle for each one, and reports
+  what already shares that vocabulary. It was measured firing on `why`, `what`,
+  `that`, `its`, `move`, `2` and `0`. Each of those returned five concepts, on
+  every write.
 
-  - **The stop-word list grows by what it was measured firing on**, and a purely
-    numeric filename segment is no longer a term at all. A number in a filename
-    is an ordinal or a date part, so searching the corpus for it returns
-    whatever else happens to be numbered.
+  A prompt that appears on every write tells a reader as much as a prompt that
+  never appears. Rule 1 exists to make somebody stop and read what the bundle
+  already says, so a prompt nobody reads costs the gate everything it is for.
 
-  - **A term has to discriminate.** The hit count is taken *before* the
-    truncation to five now, which is the whole defect: a term matching half the
-    bundle and a term matching five concepts arrived at the reader as the same
-    block of five rows. A term matching more than a fifth of the corpus — never
-    fewer than five concepts, so a small bundle is not silenced by the ratio —
-    is dropped whole rather than truncated harder. Its hits are a fact about the
-    bundle's vocabulary, not about the concept being written.
+  Three tests now decide which writes it speaks on. None of them changes the
+  question it asks.
 
-  - **It fires on a new concept, not on a rewrite.** `tool_name == "Write"` was
-    standing in for "is this new", and at `PostToolUse` it cannot: the write has
-    already happened, so the file exists whether it was created or replaced.
-    Novelty is asked of git — untracked means new — which is the technique
-    `Records` already uses at the commit door.
+  - **A term must be a word.** `STOP_WORDS` grows by the words the gate was
+    measured firing on. A purely numeric segment is no longer a term at all. A
+    number in a filename is an ordinal or a date part, so the corpus answers it
+    with everything else that carries a number.
+
+  - **A term must discriminate.** The gate counts the hits before it cuts the
+    list to five. That order was the whole defect. A term matching half the
+    bundle and a term matching five concepts reached the reader as the same five
+    rows. A term may now match no more than a fifth of the corpus. That limit
+    never falls below five concepts, so the ratio cannot silence a small bundle.
+    A term over the limit is dropped whole. Its hits describe the bundle's
+    vocabulary rather than the concept being written.
+
+  - **The write must be new.** `tool_name == "Write"` was standing in for "is
+    this new". At `PostToolUse` it cannot answer that. The write has already
+    happened, so the file exists whether it was created or replaced. The gate
+    asks git instead, and untracked means new. `Records` already asks git at the
+    commit door, so this is a technique the gem has rather than a new one.
 
   A git that cannot answer still prompts. No git, no repository, a git that
-  failed: all of them reconcile, because at this gate the prompt *is* the
+  failed: every one of them reconciles. At this gate the prompt *is* the
   refusal, so failing closed means asking rather than staying quiet.
 
 ## [1.2.0] - 2026-08-30

@@ -73,11 +73,11 @@ you invest a week.
 
 Three laws, and the reason each exists.
 
-**Rule 1 — writing is reconciliation.** Before a new concept settles, the corpus is
-searched for what it collides with. A contradiction that cannot be settled on
-the spot becomes one dated line on the board — because an unresolved
-contradiction is work, and work that is not on the board is work nobody is
-tracking.
+**Rule 1 — writing is reconciliation.** Before a new concept settles, the gate
+searches the corpus for what it collides with. Some contradictions cannot be
+settled on the spot. Each of those becomes one dated line on the board. An
+unresolved contradiction is work, and work that is not on the board is work
+nobody tracks.
 
 **Rule 2 — the day ends with a snapshot.** One mechanical line under the day's heading in
 `log.md`: inbox, oldest, in flight, waiting, backlog, to read, unverified
@@ -159,12 +159,18 @@ The first door is six checks, and what each one does when it fires:
 | `stop-gate` | end of session | **refuses** to close a day you changed without its snapshot |
 | `session-context` | session start | **informs** — hands the agent the board state, costing no call |
 
-Two of the six hold a tool call *before* it runs and hand you the decision;
-two refuse outright; one reports after the fact; one only informs. Rule 1 is on
-the reporting side deliberately. It fires when a *new* concept is
-written, names the existing concepts sharing its vocabulary, and tells the agent
-to settle it before continuing — a collision is a judgement, and a gate that
-hard-blocked on shared words would be wrong far more often than right.
+Two of the six hold a tool call *before* it runs and hand you the decision. Two
+refuse outright. One reports after the fact, and one only informs.
+
+Rule 1 sits on the reporting side deliberately. It fires when the agent writes a
+*new* concept, names the existing concepts that share its vocabulary, and tells
+the agent to settle the collision before continuing. A collision is a judgement.
+A gate that refused outright on a shared word would be wrong far more often than
+right.
+
+It asks git whether the concept is new, because at `PostToolUse` the file exists
+either way. It ignores common words, and it drops any word matching more than a
+fifth of the bundle. A word that broad describes the corpus, not the concept.
 
 `settings.json` points all six at one bash wrapper, `.claude/hooks/run`, rather
 than at `okf` directly. That indirection is the contract below being kept: a

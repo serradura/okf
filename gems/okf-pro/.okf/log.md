@@ -2,15 +2,17 @@
 
 ## 2026-09-06
 
-* **Rule 1 stops firing on its own recall.** `reconcile-search` was blocking on
-  `why`, `what`, `that`, `its`, `move`, `2` and `0`, five hits each, on every
-  write — and a prompt present on every write carries what no prompt carries.
-  Three narrowings, none of them touching what the rule asks: the stop-word list
-  grows by what was measured and drops purely numeric segments, a term matching
-  more than a fifth of the corpus is dropped whole because the count is now
-  taken before the truncation to five, and novelty is asked of git rather than
-  inferred from `tool_name == "Write"`, which at `PostToolUse` cannot tell a new
-  concept from a rewrite. A git that cannot answer still prompts
+* **Rule 1 no longer fires on common words.** `reconcile-search` was blocking on
+  `why`, `what`, `that`, `its`, `move`, `2` and `0`. Each returned five hits, on
+  every write, and a prompt present on every write tells a reader what no prompt
+  tells them. Three tests now decide which writes it speaks on, and none of them
+  changes the question it asks. A term must be a word, so the stop-word list
+  grows by what was measured and purely numeric segments are dropped. A term
+  must discriminate, so the gate counts hits before it cuts the list to five and
+  drops any term matching more than a fifth of the corpus. The write must be
+  new, so novelty is asked of git rather than inferred from `tool_name ==
+  "Write"`, which at `PostToolUse` cannot tell a new concept from a rewrite. A
+  git that cannot answer still prompts
   ([structure/the-gates](/structure/the-gates.md)).
 
 ## 2026-08-30
