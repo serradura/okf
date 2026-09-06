@@ -39,7 +39,8 @@ module OKF
         # check below — this gate runs on every Stop, and it used to pay for
         # both twice.
         board = Pro.read_text(File.join(root, "board.md"))
-        concepts = ::OKF::Bundle::Reader.read(root).concepts
+        bundle = ::OKF::Bundle::Reader.read(root)
+        concepts = bundle.concepts
 
         msgs = []
         snap = Log.snapshot_line(Pro.read_text(File.join(root, "log.md")), today.to_s)
@@ -57,6 +58,11 @@ module OKF
         # just verified would agree with itself about a deadline it cannot
         # see. The unreadable line is a refusal, not a rounding error.
         msgs.concat(Board.grammar(board).map { |m| "— board: #{m}" })
+        # The four findings the per-edit door withheld, asked where the write
+        # set is finally complete. `Conformance` takes the bundle this gate has
+        # already parsed rather than a Target: there is no edited file here to
+        # be the subject, and a second read would break the one-parse pin.
+        msgs.concat(Conformance.findings(bundle).map { |m| "— #{m}" })
         msgs.concat(Pairing.failures(root, board: board, concepts: concepts))
         return [] if msgs.empty?
 

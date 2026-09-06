@@ -21,7 +21,7 @@ never blocks, and reports "clean." That failure is [gates-only-at-the-hook-door]
 | `journal-guard` | `PreToolUse` on `Edit\|Write\|MultiEdit` | is this rewriting a past journal day? |
 | `shell-guard` | `PreToolUse` on `Bash` | is this command about to write into the bundle behind the other two? |
 | `post-edit` | `PostToolUse` on `Edit\|Write\|MultiEdit` | the three below, in one process, sharing one bundle read |
-| `check-okf` | (composed into `post-edit`) | does the bundle still validate and lint? |
+| `check-okf` | (composed into `post-edit`) | does the bundle still validate and lint — minus the four findings one edit cannot decide? |
 | `cap-check` | (composed into `post-edit`) | is In flight over the cap? |
 | `reconcile-search` | (composed into `post-edit`) | what already says this? (**Law 1**) |
 | `stop-gate` | `Stop` | is the day's snapshot line written, and does it agree with the board? (**Law 2**) |
@@ -31,6 +31,12 @@ never blocks, and reports "clean." That failure is [gates-only-at-the-hook-door]
 — they are in `CHECKS` and the door accepts them — but the scaffold wires
 `post-edit` instead, because the bundle read is the expensive part and three
 separate invocations paid for it three times over.
+
+Both of the doors that reach `check-okf` ask it for `scope: :edit`, so the four
+set-scoped findings are withheld there and confessed rather than dropped —
+[the-gates](/structure/the-gates.md) has the argument. `stop-gate` and `audit`
+ask the same questions with the write set complete, which is the only place
+they can be answered.
 
 # What they do when they cannot answer
 

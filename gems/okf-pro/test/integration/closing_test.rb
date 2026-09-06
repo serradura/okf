@@ -128,6 +128,40 @@ class ClosingTest < OKF::Pro::TestCase
     end
   end
 
+  # ── the findings one edit could not answer ────────────────────────────────
+
+  # The other half of the per-edit scoping. The four set-scoped findings are
+  # withheld at the edit door because no write order avoids them there; this is
+  # the door where the write set IS complete, so this is where they are owed.
+  # Without this the release would be pure subtraction — four findings moved
+  # out of the only gate that asked them.
+  def test_the_stop_gate_asks_what_one_edit_could_not
+    with_bundle(git: true) do |b|
+      worked_bundle(b)
+      b.snapshot_on(TODAY.to_s)
+      dir = b.path # finishes the build; the index below has to survive it
+      b.write("glossary/index.md",
+        "# Glossary\n\n* [term](term.md) - fixture.\n* [ghost](ghost.md) - not there.\n")
+
+      refusal = OKF::Pro::Closing.stop_gate(event(cwd: dir), today: TODAY)
+
+      assert_equal 1, refusal.size
+      assert_match(/RULE 2/, refusal.first)
+      assert_match(/broken_index_entry/, refusal.first)
+    end
+  end
+
+  # A bundle that conforms says nothing extra. The gate gained a question, not
+  # a voice.
+  def test_a_conformant_bundle_gains_nothing_from_the_new_question
+    with_bundle(git: true) do |b|
+      worked_bundle(b)
+      b.snapshot_on(TODAY.to_s)
+
+      assert_empty OKF::Pro::Closing.stop_gate(event(cwd: b.path), today: TODAY)
+    end
+  end
+
   # ── one parse per Stop ────────────────────────────────────────────────────
 
   # The gate runs on every Stop, and it used to parse every concept twice —

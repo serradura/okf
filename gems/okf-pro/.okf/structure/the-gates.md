@@ -42,6 +42,24 @@ clause: `Linter.call` with no options skips `expired` and `stale` and still
 reports `healthy?`, so `confession` surfaces what was not run rather than
 reporting clean over a silent skip.
 
+**The policy on top is a scope.** Four findings — `broken_link`,
+`broken_index_entry`, `orphan`, `not_in_index`, held in `SET_SCOPED` — are
+questions about a *set* of files asked after one of them. An index entry is
+decided by the concept it names; an orphan by whether anything else links it.
+At the per-edit door the write set is incomplete by definition, and no write
+order avoids that: write the index first and the entry is broken, write the
+concept first and it is the orphan. So `check(target, scope: :edit)` withholds
+those four, and the per-edit door is the only caller that asks for it.
+
+Withholding is not dropping, which is the same clause again. `deferral` says
+how many were withheld and names the two doors that ask them with the write set
+complete — `Closing.stop_gate`, through `Conformance.findings` on the bundle it
+has already parsed, and `Audit`, which never scoped anything and needed no
+change. `findings` takes a bundle and an optional `rel:` rather than a Target
+because neither of those doors has an edited file to be the subject: without a
+`rel` there is no "your edit" and no "elsewhere", and inventing the distinction
+would file every finding under a heading saying somebody else did it.
+
 # Two doors, one set of invariants
 
 `Audit.call` is the CI door. It asks `structure`, `conformance`, `curation`,

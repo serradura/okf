@@ -4,6 +4,37 @@ All notable changes to okf-pro are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this gem uses
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2026-08-30
+
+### Changed
+
+- **The per-edit checks only ask what one edit can decide.** Four of the
+  findings `check-okf` reported are questions about a *set* of files, asked
+  after one of them: `broken_index_entry` and its validator twin `broken_link`
+  are decided by the concept an index names, and `orphan` and `not_in_index` by
+  whether anything else in the bundle links or lists the file. No write order
+  avoids them at that door — write the index first and its entry is broken,
+  write the concept first and it is the orphan — so every one of them there was
+  noise by construction, on the hook that fires on every edit.
+
+  `Conformance.check` takes a `scope:` now. The per-edit door asks for `:edit`
+  and withholds those four; everything else asks for `:all` and is unchanged.
+
+- **The Stop gate asks the four instead**, which is the half of this that is an
+  addition rather than a move: `Closing.stop_gate` ran the snapshot, the board
+  grammar and the pairing invariants and **no conformance at all**. It now runs
+  it over the bundle it has already parsed, so the one-parse-per-Stop pin still
+  holds at one. `okf pro audit` needed no change — it never scoped anything.
+
+### Fixed
+
+- **A withheld finding is confessed, not dropped.** The edit door reports how
+  many findings needed the whole write set and names the doors that ask them,
+  because a gate that quietly stops reporting converts "unchecked" into
+  "checked and fine" — the failure the contract's third clause exists to name.
+  Nothing is said when nothing was withheld: a warning that is always present
+  carries no information.
+
 ## [1.1.1] - 2026-08-30
 
 ### Fixed
@@ -276,6 +307,7 @@ every use. This surface answers both.
 - **The `.bin/okf_pro` binary is gone.** `okf pro` is the only door, which is
   what lets the wrapper refuse anything that is not it.
 
+[1.2.0]: https://github.com/serradura/okf/compare/okf-pro/v1.1.1...okf-pro/v1.2.0
 [1.1.1]: https://github.com/serradura/okf/compare/okf-pro/v1.1.0...okf-pro/v1.1.1
 [1.1.0]: https://github.com/serradura/okf/compare/okf-pro/v1.0.1...okf-pro/v1.1.0
 [1.0.1]: https://github.com/serradura/okf/compare/okf-pro/v1.0.0...okf-pro/v1.0.1

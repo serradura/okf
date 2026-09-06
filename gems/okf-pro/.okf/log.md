@@ -2,6 +2,17 @@
 
 ## 2026-08-30
 
+* **A per-edit check now only asks what one edit can answer.** Four of
+  `Conformance`'s findings — `broken_link`, `broken_index_entry`, `orphan`,
+  `not_in_index` — are questions about a set of files, and no write order
+  avoids them at the per-edit door: write the index first and its entry is
+  broken, write the concept first and it is the orphan. They are withheld
+  under `scope: :edit`, confessed by count rather than dropped, and asked at
+  the Stop gate and in `audit` where the write set is complete
+  ([structure/the-gates](/structure/the-gates.md)). The Stop gate ran no
+  conformance at all before this, so half the change is an addition rather
+  than a move.
+
 * **The scaffold verbs go through `parse_flags` too, and the catalogue says so.**
   [capabilities/verbs](/capabilities/verbs.md) described the family by what it
   does *not* do: no `dir_argument`, because `setup` into an empty directory is
