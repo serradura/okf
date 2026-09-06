@@ -1,5 +1,24 @@
 # Update Log
 
+## 2026-09-02
+
+* **The SDK floor is proven by a run instead of asserted by a ratchet** —
+  [runtime-dependencies](design/runtime-dependencies.md). The rule was already
+  written down correctly: the floor "is the oldest version the tests actually
+  pass on". Nothing ever ran them there. `gemspec_test` closed that gap by
+  refusing any floor older than the SDK bundler had just resolved, which is a
+  different rule and a weaker one — it made the claim true by never admitting
+  anything but the newest release, so an upstream publication narrowed what an
+  adopter may install. `rake test:sdk_floor` runs the suite against the oldest
+  admissible SDK and CI runs it on the floor Ruby, so the sentence in the
+  concept is now a thing that happens rather than a thing that is hoped.
+
+* **The two floors are not the same claim, and looking alike is how they got
+  confused.** The kernel arrives from a checkout, so this code can start calling
+  a surface the day it is written and its floor must follow. The SDK arrives
+  from RubyGems, so nothing here calls an mcp surface it was not written
+  against. The kernel drill stays exactly as it was; only the SDK one changed.
+
 ## 2026-08-21
 
 * **The freshness stamp watches every file the registry reads** —

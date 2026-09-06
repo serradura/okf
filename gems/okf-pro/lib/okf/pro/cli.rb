@@ -795,6 +795,18 @@ module OKF
       end
 
       def scaffold(verb, argv, stdout: $stdout, stderr: $stderr)
+        # The one verb group that used to skip the parser, and the one where
+        # skipping it was worst: `--help` became the destination, so asking
+        # what the generator does ran it, into a directory called `--help`.
+        #
+        # No `FLAGS` entry, deliberately — absence already means "accepts
+        # none", and `parse_flags` refuses an undeclared flag either way. An
+        # empty entry would say these three verbs were considered and given
+        # nothing, which is a distinction this table does not draw for `audit`
+        # or `records` either.
+        options = parse_flags(argv, verb, stdout, stderr)
+        return options == :handled ? PASS : BLOCK unless options.is_a?(Hash)
+
         dest = argv.shift
 
         unless argv.empty?

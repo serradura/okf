@@ -8,3 +8,7 @@
 
 # The gem is tested against many Rubies; each resolves its own dependency set.
 Gemfile.lock
+
+# Written and removed by `rake test:sdk_floor`; present only if a run was interrupted.
+Gemfile.sdk-floor
+Gemfile.sdk-floor.lock

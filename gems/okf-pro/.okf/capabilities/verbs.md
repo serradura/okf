@@ -37,6 +37,16 @@ the two together.
 It does not go through `dir_argument`: `setup` into an empty directory is the
 whole point, and refusing one that holds no bundle would refuse every first run.
 
+It does go through `parse_flags`, and for a while it was the only family that
+did not. `--help` therefore reached the verb as its destination, and the
+generator answered the question by running. `setup --help` wrote twenty-five
+seed files into a directory named `--help`. `upgrade --help` rewrote the four
+gem-owned files of whatever repository you were standing in, because `upgrade`
+defaults its destination to the working directory. Both exited 0.
+
+None of the three declares a flag, and none needs a `FLAGS` entry to refuse
+one: absence from that table already means "accepts none".
+
 **Readers** (`audit`, `records`, `snapshot`, `unverified`, `state`, `board`,
 `friction`) answer questions. Every one of them routes through `parse_flags`,
 listed in `FLAGS` or not — because absence from that table means "accepts none",

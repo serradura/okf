@@ -151,7 +151,67 @@ class CLISetupTest < OKF::Pro::TestCase
     end
   end
 
+  # The generator verbs never reached `parse_flags`, so `--help` was taken as
+  # the destination: asking what `setup` does created a directory called
+  # `--help` and filled it with the whole seed. A question that answers itself
+  # by running the thing is the worst shape a help flag can have, and this is
+  # the one verb group where the answer is twenty-five files on disk.
+  def test_help_prints_the_usage_and_writes_nothing
+    Dir.mktmpdir do |dir|
+      Dir.chdir(dir) do
+        run = run_cli([ "setup", "--help" ])
+
+        assert_equal OKF::Pro::PASS, run.status
+        assert_match(/Usage: okf pro/, run.out)
+        assert_empty here, "asking what a generator does must not run it"
+      end
+    end
+  end
+
+  def test_h_is_the_same_question
+    Dir.mktmpdir do |dir|
+      Dir.chdir(dir) do
+        run = run_cli([ "setup", "-h" ])
+
+        assert_equal OKF::Pro::PASS, run.status
+        assert_empty here
+      end
+    end
+  end
+
+  # `setup` declares no flags, and absence from `FLAGS` means "accepts none"
+  # rather than "is exempt". An undeclared flag is the caller's typo, named as
+  # one — not a directory with a leading dash holding a seeded repository.
+  def test_an_undeclared_flag_is_a_usage_error_rather_than_a_destination
+    Dir.mktmpdir do |dir|
+      Dir.chdir(dir) do
+        run = run_cli([ "setup", "--json" ])
+
+        assert_equal OKF::Pro::BLOCK, run.status
+        assert_match(/okf pro setup —/, run.err)
+        assert_empty here
+      end
+    end
+  end
+
+  # The flag is removed from the argument list rather than left in it, so the
+  # destination is still read from what remains.
+  def test_a_destination_still_arrives_when_it_follows_a_flag
+    Dir.mktmpdir do |dir|
+      run = run_cli([ "setup", "--", dir ])
+
+      assert_equal OKF::Pro::PASS, run.status
+      assert File.file?(File.join(dir, ".okf", "board.md"))
+    end
+  end
+
   private
+
+  # What the working directory holds, dot files included. `setup` defaults its
+  # destination to the cwd, so "wrote nothing" is a claim about this list.
+  def here
+    Dir.glob("*", File::FNM_DOTMATCH) - %w[. ..]
+  end
 
   # Derived, not typed: a count in a literal is a test edit every time the
   # template grows a file, and the thing worth asserting is that setup wrote

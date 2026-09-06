@@ -4,6 +4,32 @@ All notable changes to okf-pro are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this gem uses
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.1] - 2026-08-30
+
+### Fixed
+
+- **`okf pro setup --help` prints the usage instead of running the generator.**
+  The three scaffold verbs read their destination from `argv.shift` and never
+  reached `parse_flags`. The flag was therefore the destination. `setup --help`
+  wrote the twenty-five seed files into a directory named `--help` and exited 0.
+  `upgrade --help` was worse: `upgrade` defaults its destination to the working
+  directory, so it rewrote the four gem-owned files of whatever repository you
+  were standing in.
+
+  A help flag that answers the question by running the verb is the worst shape
+  it can have. This is the one family where the answer is files on disk.
+
+  The fix routes the three verbs through the parser the readers already use.
+  None of them declares a flag, and none gains a `FLAGS` entry. Absence from
+  that table already means "accepts none" rather than "is exempt", so `setup
+  --json` is now a typo the parser names. Before, it was a seeded repository in
+  a directory with a leading dash. `--` still separates a destination from the
+  flags, for the rare path that starts with one.
+
+  The write verbs carried this defect and fixed it: `okf pro capture --help`
+  once appended `- <date> — --help` to the Inbox. The scaffold verbs are the
+  last family nobody had checked for it.
+
 ## [1.1.0] - 2026-08-22
 
 ### Changed
@@ -250,5 +276,7 @@ every use. This surface answers both.
 - **The `.bin/okf_pro` binary is gone.** `okf pro` is the only door, which is
   what lets the wrapper refuse anything that is not it.
 
+[1.1.1]: https://github.com/serradura/okf/compare/okf-pro/v1.1.0...okf-pro/v1.1.1
+[1.1.0]: https://github.com/serradura/okf/compare/okf-pro/v1.0.1...okf-pro/v1.1.0
 [1.0.1]: https://github.com/serradura/okf/compare/okf-pro/v1.0.0...okf-pro/v1.0.1
 [1.0.0]: https://github.com/serradura/okf/releases/tag/okf-pro%2Fv1.0.0

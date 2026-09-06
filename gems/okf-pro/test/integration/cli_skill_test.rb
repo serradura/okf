@@ -79,4 +79,20 @@ class CLISkillTest < OKF::Pro::TestCase
     assert_equal OKF::Pro::BLOCK, run.status
     assert_match(/needs a destination directory/, run.err)
   end
+
+  # The whole scaffold group shares one route to `parse_flags`, and this is the
+  # verb where the old behaviour was quietest: `skill --help` wrote the skill
+  # into a directory called `--help` and exited 0, so the only evidence was a
+  # stray directory nobody looks for.
+  def test_help_prints_the_usage_and_writes_nothing
+    Dir.mktmpdir do |dir|
+      Dir.chdir(dir) do
+        run = run_cli([ "skill", "--help" ])
+
+        assert_equal OKF::Pro::PASS, run.status
+        assert_match(/Usage: okf pro/, run.out)
+        assert_empty Dir.glob("*", File::FNM_DOTMATCH) - %w[. ..]
+      end
+    end
+  end
 end

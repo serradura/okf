@@ -88,4 +88,20 @@ class CLIUpgradeTest < OKF::Pro::TestCase
       assert File.file?(File.join(dir, ".okf", "board.md"))
     end
   end
+
+  # `upgrade` defaults its destination to the working directory, so the old
+  # `--help` behaviour did not merely create a stray directory here — it
+  # rewrote four gem-owned files in whichever repository the question was
+  # asked from.
+  def test_help_prints_the_usage_and_writes_nothing
+    Dir.mktmpdir do |dir|
+      Dir.chdir(dir) do
+        run = run_cli([ "upgrade", "--help" ])
+
+        assert_equal OKF::Pro::PASS, run.status
+        assert_match(/Usage: okf pro/, run.out)
+        assert_empty Dir.glob("*", File::FNM_DOTMATCH) - %w[. ..]
+      end
+    end
+  end
 end
