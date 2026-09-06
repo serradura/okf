@@ -35,6 +35,14 @@ checkpoints rather than a guarantee — search at ingestion, collision at read
 time — and the consequence is that `index.md` (findability) and `glossary/`
 (vocabulary) are this law's load-bearing organs, not hygiene.
 
+The limit was tightened on purpose once. The gate now drops a term matching
+more than a fifth of the corpus, so recall is deliberately lower than the
+filename's vocabulary allows — a term that broad describes the bundle rather
+than the claim, and every one it returned was a hit the reader learned to scroll
+past. Trading recall for a prompt that is still read is the right trade for a
+law whose only power is that somebody goes and reads something; see
+`structure/the-gates`.
+
 **Law 2's confession must be a delta, not a status.** A permanent "47
 untriaged" banner becomes wallpaper: a confession that is always present carries
 zero information, and a check that always cries trains its reader to skip it —

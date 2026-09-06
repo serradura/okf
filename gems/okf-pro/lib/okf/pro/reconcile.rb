@@ -17,6 +17,7 @@ module OKF
         return [] unless event.tool_name == "Write"
         return [] if target.rel.start_with?("journal/")
         return [] if NO_RECONCILE.include?(target.basename)
+        return [] unless new_concept?(target)
 
         hits = terms(target).map { |term| block_for(target, term) }.compact
         return [] if hits.empty?
@@ -28,8 +29,17 @@ module OKF
 
       def terms(target)
         File.basename(target.rel, ".md").split("-")
-            .reject { |t| t.empty? || STOP_WORDS.include?(t.downcase) }
+            .reject { |t| discardable?(t) }
             .first(4)
+      end
+
+      # A purely numeric segment is dropped, which is what `2` and `0` were
+      # when this was measured. A number in a filename is an ordinal or a date
+      # part — `phase-2`, `round-3` — and searching the corpus for it returns
+      # every other concept that happens to be numbered, which is a fact about
+      # the naming convention and not about this claim.
+      def discardable?(term)
+        term.empty? || STOP_WORDS.include?(term.downcase) || term.match?(/\A\d+\z/)
       end
 
       def block_for(target, term)
@@ -66,10 +76,62 @@ module OKF
       # so are the structural files: a hit in README or board.md means they quote
       # a concept, not that they assert against one.
       def matches(target, term)
-        ::OKF::Bundle::Search.call(target.bundle, term)
-                             .reject { |r| r[:id] == target.id }
-                             .reject { |r| NO_RECONCILE.include?("#{File.basename(r[:id])}.md") }
-                             .first(5)
+        rows = ::OKF::Bundle::Search.call(target.bundle, term)
+                                    .reject { |r| r[:id] == target.id }
+                                    .reject { |r| NO_RECONCILE.include?("#{File.basename(r[:id])}.md") }
+        return [] if rows.size > ceiling(target.bundle)
+
+        rows.first(5)
+      end
+
+      # A term has to discriminate, and the count that decides it is taken
+      # before the truncation — which is the whole defect. `first(5)` used to
+      # run before anyone counted, so a term matching half the bundle and a
+      # term matching five concepts arrived at the reader as the same block of
+      # five rows. That is how `why`, `what` and `that` reported five hits each
+      # on every write while looking exactly like a real collision.
+      #
+      # A term over the ceiling is dropped whole rather than truncated harder:
+      # it is a fact about the bundle's vocabulary, and printing its first five
+      # rows would present a property of the corpus as a property of this
+      # concept.
+      #
+      # A fifth of the corpus is the rule — a term returning that much of the
+      # bundle carries no information about the concept being written. The
+      # floor is what keeps the rule honest where a corpus is small: a fifth of
+      # eight concepts is under two, so without it the gate would fall silent
+      # exactly where the bundle is small enough for reconciliation to be
+      # cheap. Five is the floor because five is what a block shows — below it,
+      # dropping a term would mean refusing to print a list the gate could have
+      # printed whole.
+      def ceiling(bundle)
+        [ (bundle.concepts.size / 5.0).ceil, 5 ].max
+      end
+
+      # Is this Write the moment a claim enters the corpus, or a rewrite of one
+      # already in it?
+      #
+      # `tool_name == "Write"` cannot tell those apart. At `PostToolUse` the
+      # write has already happened, so the file exists either way, and the gate
+      # fired on every rewrite of every concept — the second half of the recall
+      # problem, and the half no word list reaches. Git is the only party that
+      # remembers what was there first. `Records` already asks it at a door
+      # where the answer matters, so this is the technique the gem has rather
+      # than a new dependency.
+      #
+      # Only a clean "yes, tracked" is silence. No git, no repository, a git
+      # that could not answer — all of them prompt, because the prompt IS the
+      # refusal at this gate: failing closed here means asking, not staying
+      # quiet, and a bundle outside version control is one where nothing else
+      # remembers either.
+      def new_concept?(target)
+        IO.popen(
+          [ "git", "-C", target.root, "ls-files", "--error-unmatch", "--", target.rel ],
+          err: File::NULL, &:read
+        )
+        !$?.success?
+      rescue Errno::ENOENT
+        true
       end
     end
   end

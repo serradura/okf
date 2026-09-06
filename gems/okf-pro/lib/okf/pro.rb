@@ -118,7 +118,20 @@ module OKF
     FAIL  = 1 # audit only — CI's exit codes, not the hook protocol's.
 
     # Words too common to reconcile on. A search for "the" returns the corpus.
-    STOP_WORDS = %w[the a an of and or for to in on with my is not].freeze
+    #
+    # The second row is what the gate was measured firing on — `why`, `what`,
+    # `that`, `its`, `move` — each returning five concepts on every write,
+    # which is a prompt that carries the same information as no prompt. They
+    # are function words but for one: `move` is a content word, listed here
+    # because it was measured rather than because English says so, and in a
+    # bundle about moving house it would be the most discriminating word
+    # there is. `Reconcile.ceiling` is the general instrument for that
+    # problem, and it is bundle-relative where this list cannot be; the day
+    # the ceiling is trusted, `move` is the word to take back out.
+    STOP_WORDS = %w[
+      the a an of and or for to in on with my is not
+      why what that its move how when this from into be are was it
+    ].freeze
 
     # Every raw read the checker makes goes through here. Read as bytes,
     # forced to UTF-8, scrubbed — because the alternative failed open twice

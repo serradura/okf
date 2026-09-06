@@ -60,6 +60,45 @@ because neither of those doors has an edited file to be the subject: without a
 `rel` there is no "your edit" and no "elsewhere", and inventing the distinction
 would file every finding under a heading saying somebody else did it.
 
+# Rule 1 is narrowed by three tests, not weakened
+
+`Reconcile.search` asks what already says this, and it was measured firing on
+`why`, `what`, `that`, `its`, `move`, `2` and `0` — five concepts each, on every
+write. That is the failure [a-rule-you-can-walk-past](/design/a-rule-you-can-walk-past.md)
+names from the other end: a prompt present on every write carries what a prompt
+that never appears carries, and this is the one gate whose whole job is to make
+somebody go and read something.
+
+Three tests narrow *which* writes it speaks on. None of them changes what it
+asks.
+
+**A term must be a word.** `STOP_WORDS` carries what the gate was measured
+firing on, and a purely numeric segment is not a term at all — a number in a
+filename is an ordinal or a date part, and the corpus answers it with everything
+else that happens to be numbered. One word on that list, `move`, is a content
+word rather than a function word; it is there by measurement, and `ceiling`
+below is the instrument that should eventually replace it, because a bundle
+about moving house has no more discriminating word.
+
+**A term must discriminate.** `matches` counts before it truncates, which is the
+defect stated as a fix: `first(5)` used to run before anyone counted, so a term
+hitting half the bundle and a term hitting five concepts reached the reader as
+the same five rows. A term matching more than `ceiling` — a fifth of the corpus,
+never fewer than the five rows a block can print — is dropped whole. Truncating
+it harder would present a property of the corpus as a property of this concept.
+
+**The write must be new.** `tool_name == "Write"` was standing in for novelty
+and cannot carry it: at `PostToolUse` the write has happened, so the file exists
+whether it was created or replaced. `new_concept?` asks git instead — untracked
+means new — which is the technique [the-recorder](/structure/the-recorder.md)
+already uses at the commit door.
+
+And the direction of the failure, which is the contract again: only a clean
+"yes, tracked" buys silence. No git, no repository, a git that could not answer
+— every one of them reconciles. At this gate the prompt **is** the refusal, so
+failing closed means asking, and a bundle outside version control is one where
+nothing else remembers what was there first either.
+
 # Two doors, one set of invariants
 
 `Audit.call` is the CI door. It asks `structure`, `conformance`, `curation`,

@@ -4,6 +4,40 @@ All notable changes to okf-pro are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this gem uses
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] - 2026-09-06
+
+### Changed
+
+- **Rule 1 stops firing on its own recall.** `reconcile-search` was measured
+  blocking on `why`, `what`, `that`, `its`, `move`, `2` and `0`, returning five
+  concepts each time, on every write. A prompt that appears on every write
+  carries the same information as a prompt that never appears — and Rule 1 is
+  the one gate whose entire job is to make somebody go and read something. Three
+  narrowings, none of which touches what the rule asks:
+
+  - **The stop-word list grows by what it was measured firing on**, and a purely
+    numeric filename segment is no longer a term at all. A number in a filename
+    is an ordinal or a date part, so searching the corpus for it returns
+    whatever else happens to be numbered.
+
+  - **A term has to discriminate.** The hit count is taken *before* the
+    truncation to five now, which is the whole defect: a term matching half the
+    bundle and a term matching five concepts arrived at the reader as the same
+    block of five rows. A term matching more than a fifth of the corpus — never
+    fewer than five concepts, so a small bundle is not silenced by the ratio —
+    is dropped whole rather than truncated harder. Its hits are a fact about the
+    bundle's vocabulary, not about the concept being written.
+
+  - **It fires on a new concept, not on a rewrite.** `tool_name == "Write"` was
+    standing in for "is this new", and at `PostToolUse` it cannot: the write has
+    already happened, so the file exists whether it was created or replaced.
+    Novelty is asked of git — untracked means new — which is the technique
+    `Records` already uses at the commit door.
+
+  A git that cannot answer still prompts. No git, no repository, a git that
+  failed: all of them reconcile, because at this gate the prompt *is* the
+  refusal, so failing closed means asking rather than staying quiet.
+
 ## [1.2.0] - 2026-08-30
 
 ### Changed
@@ -307,6 +341,7 @@ every use. This surface answers both.
 - **The `.bin/okf_pro` binary is gone.** `okf pro` is the only door, which is
   what lets the wrapper refuse anything that is not it.
 
+[1.3.0]: https://github.com/serradura/okf/compare/okf-pro/v1.2.0...okf-pro/v1.3.0
 [1.2.0]: https://github.com/serradura/okf/compare/okf-pro/v1.1.1...okf-pro/v1.2.0
 [1.1.1]: https://github.com/serradura/okf/compare/okf-pro/v1.1.0...okf-pro/v1.1.1
 [1.1.0]: https://github.com/serradura/okf/compare/okf-pro/v1.0.1...okf-pro/v1.1.0

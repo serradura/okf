@@ -7,6 +7,12 @@ require "test_helper"
 # your search words do, and no better. These tests pin the boundary rather
 # than pretend it is not there.
 class ReconcileTest < OKF::Pro::TestCase
+  # Staged is tracked as far as `ls-files --error-unmatch` is concerned, and a
+  # commit would need an identity this suite does not configure.
+  def track_everything(dir)
+    system("git", "-C", dir, "add", "-A", out: File::NULL, err: File::NULL)
+  end
+
   def bundle_with_terms(b)
     b.concept("glossary/binding-estimate.md", type: "Term",
       body: "# Definition\n\nA binding estimate fixes the price for the listed inventory.\n")
@@ -98,6 +104,112 @@ class ReconcileTest < OKF::Pro::TestCase
       e = write_event(b.path, "journal/2026-08-12.md")
 
       assert_empty OKF::Pro::Reconcile.search(OKF::Pro::Target.for(e), e)
+    end
+  end
+
+  # ── novelty, asked of git ─────────────────────────────────────────────────
+
+  # `tool_name == "Write"` was doing the work of "is this new", and at
+  # PostToolUse it cannot: the write has already happened, so the file exists
+  # whether it was created or replaced. Every rewrite of every concept fired.
+  def test_a_rewrite_of_a_tracked_concept_does_not_fire
+    with_bundle(git: true) do |b|
+      bundle_with_terms(b)
+      dir = b.path
+      track_everything(dir)
+      e = write_event(dir, "glossary/binding-estimate.md")
+
+      assert_empty OKF::Pro::Reconcile.search(OKF::Pro::Target.for(e), e)
+    end
+  end
+
+  # And the pin that keeps the novelty test from being a mute button: the same
+  # tracked bundle, a path git has never seen, still reconciles.
+  def test_a_new_concept_in_a_tracked_bundle_still_fires
+    with_bundle(git: true) do |b|
+      bundle_with_terms(b)
+      dir = b.path
+      track_everything(dir)
+      e = write_event(dir, "reference/binding-estimate-notes.md")
+
+      refute_empty OKF::Pro::Reconcile.search(OKF::Pro::Target.for(e), e)
+    end
+  end
+
+  # A git that cannot answer prompts anyway — every other test in this file is
+  # an instance, since none of their bundles is a repository at all. The prompt
+  # IS the refusal at this gate, so failing closed means asking.
+  def test_a_bundle_outside_version_control_still_reconciles
+    with_bundle do |b|
+      bundle_with_terms(b)
+      e = write_event(b.path, "reference/binding-estimate-notes.md")
+
+      refute_empty OKF::Pro::Reconcile.search(OKF::Pro::Target.for(e), e)
+    end
+  end
+
+  # ── a term has to discriminate ────────────────────────────────────────────
+
+  # The count is taken before the truncation, which is the whole defect: five
+  # rows out of twelve hits and five rows out of five looked identical to the
+  # reader. A term over the ceiling is dropped whole rather than truncated
+  # harder — its hits are a fact about the corpus, not about this concept.
+  def test_a_term_matching_more_than_the_ceiling_is_dropped_whole
+    with_bundle do |b|
+      12.times do |i|
+        b.concept("reference/haulage-note-#{i}.md", type: "Briefing",
+          body: "# Note #{i}\n\nEvery note in this fixture mentions haulage.\n")
+      end
+      b.concept("glossary/binding-estimate.md", type: "Term",
+        body: "# Definition\n\nA binding estimate fixes the listed price.\n")
+      e = write_event(b.path, "reference/haulage-binding-estimate.md")
+      target = OKF::Pro::Target.for(e)
+
+      assert_empty OKF::Pro::Reconcile.matches(target, "haulage"),
+        "a term returning most of the bundle carries no information about this concept"
+      refute_empty OKF::Pro::Reconcile.matches(target, "binding")
+
+      refusal = OKF::Pro::Reconcile.search(target, e)
+
+      refute_empty refusal, "a genuine collision still blocks"
+      refute_match(/haulage/, refusal.first)
+      assert_match(%r{glossary/binding-estimate}, refusal.first)
+    end
+  end
+
+  # The floor under the ratio. A fifth of a small corpus is less than one, so
+  # without it every term would be over the ceiling and the gate would fall
+  # silent exactly where the bundle is small enough for reconciliation to be
+  # cheap.
+  def test_a_small_bundle_is_not_silenced_by_the_ratio
+    with_bundle do |b|
+      bundle_with_terms(b)
+      target = OKF::Pro::Target.for(write_event(b.path, "reference/binding-estimate-notes.md"))
+
+      assert_operator OKF::Pro::Reconcile.ceiling(target.bundle), :>=, 5
+      refute_empty OKF::Pro::Reconcile.matches(target, "binding")
+    end
+  end
+
+  # ── the words it was measured firing on ───────────────────────────────────
+
+  def test_the_words_measured_firing_are_stop_words
+    with_bundle do |b|
+      bundle_with_terms(b)
+      target = OKF::Pro::Target.for(write_event(b.path, "learnings/why-what-that-its-move-quote.md"))
+
+      assert_equal %w[quote], OKF::Pro::Reconcile.terms(target)
+    end
+  end
+
+  # `2` and `0` were terms. A number in a filename is an ordinal or a date
+  # part, and searching for it returns whatever else happens to be numbered.
+  def test_a_purely_numeric_segment_is_not_a_term
+    with_bundle do |b|
+      bundle_with_terms(b)
+      target = OKF::Pro::Target.for(write_event(b.path, "reference/phase-2-binding-review.md"))
+
+      assert_equal %w[phase binding review], OKF::Pro::Reconcile.terms(target)
     end
   end
 

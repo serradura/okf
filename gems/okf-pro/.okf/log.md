@@ -1,5 +1,18 @@
 # Update Log
 
+## 2026-09-06
+
+* **Rule 1 stops firing on its own recall.** `reconcile-search` was blocking on
+  `why`, `what`, `that`, `its`, `move`, `2` and `0`, five hits each, on every
+  write — and a prompt present on every write carries what no prompt carries.
+  Three narrowings, none of them touching what the rule asks: the stop-word list
+  grows by what was measured and drops purely numeric segments, a term matching
+  more than a fifth of the corpus is dropped whole because the count is now
+  taken before the truncation to five, and novelty is asked of git rather than
+  inferred from `tool_name == "Write"`, which at `PostToolUse` cannot tell a new
+  concept from a rewrite. A git that cannot answer still prompts
+  ([structure/the-gates](/structure/the-gates.md)).
+
 ## 2026-08-30
 
 * **A per-edit check now only asks what one edit can answer.** Four of
