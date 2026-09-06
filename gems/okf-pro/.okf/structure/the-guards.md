@@ -28,6 +28,14 @@ mutator after `&&` is not missed, `MARKDOWN` finds the paths, and `own_write?`
 is what keeps `okf pro` verbs from being refused by the guard that exists to
 make people use them.
 
+**Both of its filename patterns end on an explicit boundary, never `\b`.** `.`
+and `-` are not word characters, so `\b` fires *inside* a longer name: `.okf`
+matched `.okf-pro-new`, which is `Scaffold::SUFFIX` — the one filename this gem
+guarantees to put in front of an adopter — and `\.md\b` matched inside
+`CLAUDE.md.okf-pro-new`, yielding a markdown path by backtracking. The guard
+prompted on the artefacts its own sibling verb had just written. A boundary
+that a filename separator satisfies is not a boundary between filenames.
+
 # Why there are two
 
 A gate reads a tool event. A shell redirect is not one — a `cat > board.md`

@@ -4,6 +4,25 @@ All notable changes to okf-pro are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this gem uses
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.1] - 2026-09-06
+
+### Fixed
+
+- **`shell-guard` no longer prompts on the files `okf pro upgrade` writes.**
+  Both of its filename patterns ended on `\b`. `.` and `-` are not word
+  characters, so that boundary fires *inside* a longer name: `.okf` matched
+  `.okf-pro-new` — `Scaffold::SUFFIX`, the collision file the scaffold itself
+  puts beside anything it will not overwrite — and `\.md\b` matched inside
+  `CLAUDE.md.okf-pro-new`, which backtracked to the markdown path `CLAUDE.md`.
+
+  So `rm -f CLAUDE.md.okf-pro-new`, the command an adopter runs to finish an
+  upgrade, was routed to the owner as a possible bundle write. One verb of this
+  gem asking permission for what another had just created.
+
+  Both patterns now end where a filename ends. Nothing the guard should ask
+  about was made quieter: a heredoc, an in-place edit, a `cp` and an inline
+  interpreter write into the bundle all still ask.
+
 ## [1.2.0] - 2026-08-30
 
 ### Changed
@@ -307,6 +326,7 @@ every use. This surface answers both.
 - **The `.bin/okf_pro` binary is gone.** `okf pro` is the only door, which is
   what lets the wrapper refuse anything that is not it.
 
+[1.2.1]: https://github.com/serradura/okf/compare/okf-pro/v1.2.0...okf-pro/v1.2.1
 [1.2.0]: https://github.com/serradura/okf/compare/okf-pro/v1.1.1...okf-pro/v1.2.0
 [1.1.1]: https://github.com/serradura/okf/compare/okf-pro/v1.1.0...okf-pro/v1.1.1
 [1.1.0]: https://github.com/serradura/okf/compare/okf-pro/v1.0.1...okf-pro/v1.1.0

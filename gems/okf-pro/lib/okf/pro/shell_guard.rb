@@ -48,7 +48,13 @@ module OKF
 
       # A markdown path anywhere in the command, minus the quoting and
       # separators a shell puts around it.
-      MARKDOWN = %r{[^\s'"`|;&()<>]*\.md\b}.freeze
+      #
+      # The tail is NOT `\b`. `.` and `-` are non-word characters, so `\b`
+      # fires inside a longer filename and `CLAUDE.md.okf-pro-new` yielded the
+      # path `CLAUDE.md` by backtracking — a file that is not markdown, read as
+      # one, and then read as a relative path that could be in the bundle. The
+      # name has to actually END at `.md`.
+      MARKDOWN = %r{[^\s'"`|;&()<>]*\.md(?![^\s'"`|;&()<>])}.freeze
 
       # What separates one COMMAND from the next, for the one question below
       # that has to look past the whole string.
@@ -152,8 +158,16 @@ module OKF
       # Relative paths stay conservative rather than being resolved against
       # the cwd, because a `cd` earlier in the command would make that
       # resolution a guess, and this guard asks when it cannot decide.
+      # The bundle directory, and not a name that merely begins with it. `\b`
+      # was the boundary here too and `-` ends a word, so `.okf-pro-new` — the
+      # collision suffix `Scaffold` itself writes — matched `.okf`, and the
+      # guard prompted on the artefact its own sibling verb had just put in
+      # front of the adopter. A path is the bundle when `.okf` ends the token
+      # or a separator follows it.
+      BUNDLE_DIR = %r{#{Regexp.escape(BundleRoot::DIR)}(?=/|\z|[\s'"`|;&()<>])}.freeze
+
       def touches_bundle?(command, root)
-        return true if command.match?(/#{Regexp.escape(BundleRoot::DIR)}\b/)
+        return true if command.match?(BUNDLE_DIR)
 
         command.scan(MARKDOWN).any? do |path|
           !path.start_with?("/") || path.start_with?("#{root}/")
