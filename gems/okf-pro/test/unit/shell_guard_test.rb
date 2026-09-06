@@ -167,6 +167,43 @@ class ShellGuardTest < OKF::Pro::TestCase
     end
   end
 
+  # ── a filename is not the token it starts with ───────────────────────────
+
+  # `okf pro setup` and `upgrade` write a collision as `<path>.okf-pro-new`
+  # (`Scaffold::SUFFIX`), so this is the one filename the gem is guaranteed to
+  # put in front of an adopter. `\b` fires after "okf" because `-` is not a
+  # word character, so `.okf-pro-new` read as `.okf` and the guard prompted on
+  # the artefact its own sibling verb had just created. Two verbs of one gem,
+  # arguing.
+  def test_the_scaffolds_own_collision_files_are_not_the_bundle
+    with_bundle do |b|
+      assert_empty ask_for(b.path, "rm -f CLAUDE.md#{OKF::Pro::Scaffold::SUFFIX}")
+      assert_empty ask_for(b.path, "rm -f .gitignore#{OKF::Pro::Scaffold::SUFFIX}")
+    end
+  end
+
+  # The same boundary, one directory along. Asserted with a non-markdown
+  # target on purpose: a RELATIVE `.md` path asks whatever directory it sits
+  # in, because this guard will not resolve one against a cwd a `cd` may have
+  # moved. So `.okf-archive/notes.md` is a legitimate prompt, and the only way
+  # to see the directory name being tested is to take the markdown away.
+  def test_a_directory_merely_starting_with_the_bundle_name_is_not_it
+    with_bundle do |b|
+      assert_empty ask_for(b.path, "rm -f .okf-archive/data.txt")
+      assert_kind_of Hash, ask_for(b.path, "rm -f .okf/data.txt")
+    end
+  end
+
+  # `\.md\b` matched inside a longer filename, so `CLAUDE.md.okf-pro-new`
+  # yielded the markdown path `CLAUDE.md` by backtracking. A file whose name
+  # merely contains `.md.` is not a markdown file.
+  def test_a_filename_containing_md_is_not_a_markdown_path
+    with_bundle do |b|
+      assert_empty ask_for(b.path, "mv notes.md.bak notes.md.old")
+      assert_kind_of Hash, ask_for(b.path, "mv notes.md other.md")
+    end
+  end
+
   def test_an_empty_command_is_not_a_write
     with_bundle do |b|
       assert_empty ask_for(b.path, "")

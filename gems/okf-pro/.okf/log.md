@@ -1,5 +1,17 @@
 # Update Log
 
+## 2026-09-06
+
+* **`shell-guard` stopped prompting on the scaffold's own collision files.**
+  Both of its filename patterns ended on `\b`, and `.` and `-` are not word
+  characters, so the boundary fired inside a longer name: `.okf` matched
+  `.okf-pro-new` (`Scaffold::SUFFIX`) and `\.md\b` matched inside
+  `CLAUDE.md.okf-pro-new`. `okf pro upgrade` writes those files, so the guard
+  asked the owner about artefacts the gem had just created
+  ([structure/the-guards](/structure/the-guards.md)). Found by running the
+  seeded configuration in a working repository rather than by reading the
+  regex.
+
 ## 2026-08-30
 
 * **A per-edit check now only asks what one edit can answer.** Four of
