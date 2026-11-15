@@ -262,7 +262,8 @@ module OKF
       end
 
       def deny(status, message)
-        [ status, { "content-type" => "application/json; charset=utf-8" }, [ JSON.generate("ok" => false, "error" => message) ] ]
+        headers = OKF::Server::App::SECURITY_HEADERS.merge("content-type" => "application/json; charset=utf-8")
+        [ status, headers, [ JSON.generate("ok" => false, "error" => message) ] ]
       end
 
       # Every branch ends in the sentence the manager will show. The core does
@@ -657,18 +658,24 @@ module OKF
       end
 
       def json(object)
-        [ 200, { "content-type" => "application/json; charset=utf-8" }, [ JSON.generate(object) ] ]
+        headers = OKF::Server::App::SECURITY_HEADERS.merge("content-type" => "application/json; charset=utf-8")
+        [ 200, headers, [ JSON.generate(object) ] ]
       end
 
       def html(status, body)
-        [ status, { "content-type" => "text/html; charset=utf-8" }, [ body ] ]
+        headers = OKF::Server::App::HTML_SECURITY_HEADERS.merge("content-type" => "text/html; charset=utf-8")
+        [ status, headers, [ body ] ]
       end
 
       # Keep the query string across redirects — `/b/notes?view=files` must land
       # on the Files view, not reset to the default graph.
       def redirect(location, status, query = "")
         location += "?#{query}" unless query.empty?
-        [ status, { "location" => location, "content-type" => "text/plain; charset=utf-8" }, [ "" ] ]
+        headers = OKF::Server::App::SECURITY_HEADERS.merge(
+          "location" => location,
+          "content-type" => "text/plain; charset=utf-8"
+        )
+        [ status, headers, [ "" ] ]
       end
 
       def not_found
