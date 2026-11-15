@@ -659,6 +659,37 @@ class OKF::Render::GraphTest < OKF::TestCase
     refute_includes html, "a &lt;b&gt;bold&lt;/b&gt; claim", "the pre-escaped fragment is not baked"
   end
 
+  test "every CDN script is version-pinned with SRI and the meta CSP matches the static boundary" do
+    require "okf/server/app"
+    write("a.md", "---\ntype: Note\ntitle: A\ndescription: d\n---\n\nhi\n")
+    html = OKF::Render::Graph.static(OKF::Bundle::Folder.load(@tmpdir), title: "Demo")
+
+    head_scripts = html.scan(/<script\s+src="https:\/\/[^"]+"[^>]*>/)
+    refute_empty head_scripts
+    head_scripts.each do |tag|
+      assert_match(/integrity="sha384-[A-Za-z0-9+\/=]+"/, tag, "missing SRI on #{tag}")
+      assert_includes tag, 'crossorigin="anonymous"', "missing crossorigin on #{tag}"
+    end
+
+    lazy_calls = html.scan(/loadScript\('([^']+)'(?:,\s*'([^']+)')?\)/)
+    refute_empty lazy_calls
+    lazy_calls.each do |url, integrity|
+      assert_match(%r{\Ahttps://cdn\.jsdelivr\.net/npm/.+@\d+\.\d+\.\d+/}, url, "unpinned lazy script: #{url}")
+      assert_match(/\Asha384-[A-Za-z0-9+\/=]+\z/, integrity.to_s, "missing SRI on lazy script: #{url}")
+    end
+
+    layout_srcs = html.scan(/\['(https:\/\/[^']+)'\s*,\s*'([^']*)'\]/)
+    refute_empty layout_srcs
+    layout_srcs.each do |url, integrity|
+      assert_match(%r{\Ahttps://cdn\.jsdelivr\.net/npm/.+@\d+\.\d+\.\d+/}, url, "unpinned layout script: #{url}")
+      assert_match(/\Asha384-[A-Za-z0-9+\/=]+\z/, integrity, "missing SRI on layout script: #{url}")
+    end
+
+    meta_csp = html[/<meta\s+http-equiv="Content-Security-Policy"\s+content="([^"]+)"/, 1]
+    expected_meta_csp = OKF::Server::App::HTML_CSP.split("; ").reject { |d| d.start_with?("frame-ancestors") }.join("; ")
+    assert_equal expected_meta_csp, meta_csp
+  end
+
   private
 
   def render(**opts)
