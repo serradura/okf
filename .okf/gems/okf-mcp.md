@@ -5,8 +5,8 @@ description: A Model Context Protocol server over OKF bundles, so any MCP-capabl
 resource: gems/okf-mcp
 tags: [gem, mcp, agent, protocol]
 generated:
-  by: human:maintainer
-  at: 2026-08-19T12:00:00Z
+  by: process:okf-maintain
+  at: 2026-11-20T22:05:23Z
 sources:
   - title: gems/okf-mcp
     resource: https://github.com/serradura/okf/tree/main/gems/okf-mcp
@@ -41,5 +41,7 @@ rather than a gem axis on one matrix precisely because the floors diverge — se
 
 `@okf-mcp` — `gems/okf-mcp/.okf/`, which ships inside the gem, so an installed
 copy carries a real bundle for a host to read through the very tools it serves.
-Its `structure/` area is pinned to the tree, and its `capabilities/tools.md` is
+The SDK compatibility window and its floor check live in
+`@okf-mcp design/runtime-dependencies`; request dispatch lives in
+`@okf-mcp structure/server-definition`. Its `structure/` area is pinned to the tree, and its `capabilities/tools.md` is
 pinned to the tools `server.rb` actually defines.

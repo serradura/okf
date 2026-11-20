@@ -5,7 +5,9 @@
 * Support MCP 1.11 dispatch on stdio and Streamable HTTP. The
   [server definition](structure/server-definition.md) forwards SDK arguments
   unchanged, and the [runtime dependency](design/runtime-dependencies.md)
-  accepts 1.11.x and holds new minors for a compatibility run.
+  accepts 1.11.x and holds new minors for a compatibility run. The
+  [test layers](testing/layers.md) separate the SDK-session regression from
+  the transport checks.
 
 ## 2026-09-02
 
