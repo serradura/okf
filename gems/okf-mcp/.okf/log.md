@@ -1,5 +1,14 @@
 # Update Log
 
+## 2026-11-20
+
+* Support MCP 1.11 dispatch on stdio and Streamable HTTP. The
+  [server definition](structure/server-definition.md) forwards SDK arguments
+  unchanged, and the [runtime dependency](design/runtime-dependencies.md)
+  accepts 1.11.x and holds new minors for a compatibility run. The
+  [test layers](testing/layers.md) separate the SDK-session regression from
+  the transport checks.
+
 ## 2026-09-02
 
 * **The SDK floor is proven by a run instead of asserted by a ratchet** —

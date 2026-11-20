@@ -1,5 +1,10 @@
 # Update Log
 
+## 2026-11-20
+
+* [okf-mcp](gems/okf-mcp.md) now points to the gem's SDK compatibility policy
+  and request dispatch. The supported SDK range stays with the gem that tests it.
+
 ## 2026-08-22
 
 * **This repository's own registry is now `.okf.json`.** okf renamed the

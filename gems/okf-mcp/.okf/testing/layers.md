@@ -4,8 +4,8 @@ title: What each test layer proves
 description: Integration-first over real JSON-RPC frames, with process-spawning confined to the two files that prove the process — plus the wire-reading rules the SSE tests cannot be written without.
 tags: [testing, integration, http, sse]
 generated:
-  by: human:maintainer
-  at: 2026-08-19T12:00:00Z
+  by: process:okf-maintain
+  at: 2026-11-20T22:05:23Z
 resource: test/integration
 ---
 
@@ -18,6 +18,12 @@ resource: test/integration
 | the process | `okf mcp` spawned for real, WEBrick on a real socket | `cli_plugin_test.rb`, `http_test.rb`, `http_modern_test.rb`, `http_listen_test.rb` |
 | the argv shell | flags and exit codes, in-process, spawning nothing | `cli_test.rb` |
 | units | the pieces with contracts of their own | `test/unit/` |
+
+`test/unit/server_test.rb` drives both dispatch entry points through a real
+SDK session, so dropping an SDK-supplied keyword fails without spawning a
+process. `test/unit/gemspec_test.rb` checks the dependency bounds and the
+resolved version, while [the SDK-floor task](../design/runtime-dependencies.md)
+runs this same suite at the oldest admitted version.
 
 The three tool directories mirror the kernel's own — the three ways a bundle is
 named: by directory, through the registry, and several at once.

@@ -5,6 +5,19 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.0] - 2026-11-20
+
+### Fixed
+
+- Preserve the SDK's request arguments through the server's cache wrapper. MCP
+  1.11 passes an `auth_info` keyword during dispatch; the old wrapper rejected
+  it before either stdio or Streamable HTTP could answer.
+
+### Changed
+
+- Require MCP 1.11.x. Patches can resolve normally; a new minor must be tested
+  before the requirement admits it.
+
 ## [1.3.0] - 2026-08-22
 
 ### Fixed

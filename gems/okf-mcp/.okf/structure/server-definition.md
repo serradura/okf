@@ -4,8 +4,8 @@ title: The server definition
 description: The MCP::Server subclass, the fourteen tool builders and the private helpers they share, one declared output shape per tool, and concepts as resources with a URI parser the SDK's matcher cannot supply.
 tags: [mcp, server, tools, schemas, resources]
 generated:
-  by: human:maintainer
-  at: 2026-08-19T12:00:00Z
+  by: process:okf-maintain
+  at: 2026-11-20T22:05:23Z
 resource: lib/okf/mcp/server.rb
 ---
 
@@ -29,7 +29,10 @@ registry and an engine. `Definition` subclasses the SDK's server and adds the
 per-request wrap: `#in_request` memoizes fingerprints and `#retain_served`
 prunes cache residency, so a frame's repeated reads cost one stat. `#handle`
 and `#handle_json` are what the tests drive — real JSON-RPC frames, no
-transport involved.
+transport involved. Both entry points forward the SDK's dispatch arguments
+unchanged, including the `auth_info` keyword the supported SDK passes.
+[The test layers](../testing/layers.md) distinguish the dispatch regression
+from the transport checks.
 
 **The fourteen builders**, one per tool: `tags_tool`, `types_tool`,
 `stats_tool`, `list_bundles_tool`, `dirs_tool`, `index_tool`, `search_tool`,
