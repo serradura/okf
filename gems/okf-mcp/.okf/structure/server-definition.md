@@ -29,7 +29,8 @@ registry and an engine. `Definition` subclasses the SDK's server and adds the
 per-request wrap: `#in_request` memoizes fingerprints and `#retain_served`
 prunes cache residency, so a frame's repeated reads cost one stat. `#handle`
 and `#handle_json` are what the tests drive — real JSON-RPC frames, no
-transport involved.
+transport involved. Both entry points forward the SDK's dispatch arguments
+unchanged, including the `auth_info` keyword passed by MCP 1.11.
 
 **The fourteen builders**, one per tool: `tags_tool`, `types_tool`,
 `stats_tool`, `list_bundles_tool`, `dirs_tool`, `index_tool`, `search_tool`,

@@ -29,10 +29,11 @@ kernel holds its own: argue it, do not add it for convenience — and
 One rule covers both, and it is the reason the pins are not round numbers.
 
 **`mcp` is pinned pessimistically (`~>`)**, and the floor is not a guess about
-compatibility. It is the oldest version the tests actually pass on. The listen
-and modern-path tests exercise the SEP-2575 wire, which 1.0 and 1.1 never
-served, so against those versions the tests fail and the floor cannot admit
-them.
+compatibility. It is the oldest version of the supported SDK series the
+suite proves. The supported series now starts at 1.11.0 and stops before 1.12.0.
+Patch releases resolve normally; opening a new SDK minor takes a compatibility run.
+The session-dispatch regression exercises the SDK calling both request entry
+points; the transport suites prove stdio and Streamable HTTP still answer.
 
 `rake test:sdk_floor` is what makes that sentence true rather than hopeful. It
 runs the whole suite against the oldest SDK the pin admits, and CI runs it on

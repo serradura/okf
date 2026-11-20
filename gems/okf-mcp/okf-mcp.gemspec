@@ -55,17 +55,11 @@ Gem::Specification.new do |spec|
   # only aliased it was one more name to install, document and keep working.
   spec.require_paths = [ "lib" ]
 
-  # The floor tracks what the suite proves (test/unit/gemspec_test.rb pins
-  # it): the listen and modern-path tests exercise the SEP-2575 wire, which
-  # 1.0 and 1.1 never served — against them the tests fail, so the floor
-  # cannot admit them.
-  #
-  # 1.3 because that is what the suite now resolves. `Gemfile.lock` is not
-  # committed, so CI resolves the newest SDK the `~>` admits and the suite proves
-  # itself against *that* — which is the whole reason the floor test exists, and
-  # why it moved on its own the day 1.3.0 was published rather than the day
-  # anything here changed. The same PR that moves the lockfile moves this line.
-  spec.add_dependency "mcp", "~> 1.3"
+  # Stay on tested 1.11.x patches; a new minor needs a compatibility run.
+  # The request wrapper forwards its dispatch options, including auth_info,
+  # to the SDK unchanged.
+  # Test both this floor and the newest compatible SDK before release.
+  spec.add_dependency "mcp", "~> 1.11.0"
   # The kernel version that ships Search.prepare/with/across, registry groups
   # and project-local discovery, `dirs`, `Bundle#directories` (the one source
   # the dir refusal consults), and the slug grammar this shell rides. 1.12

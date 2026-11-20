@@ -44,6 +44,13 @@ class OKF::MCP::GemspecTest < OKF::TestCase
     refute_nil mcp_pin, "okf-mcp.gemspec declares no `~>` pin on mcp: #{mcp_requirement}"
   end
 
+  test "the mcp requirement starts at the supported 1.11 SDK series" do
+    assert mcp_requirement.satisfied_by?(Gem::Version.new("1.11.0"))
+    refute mcp_requirement.satisfied_by?(Gem::Version.new("1.10.0"))
+    assert mcp_requirement.satisfied_by?(Gem::Version.new("1.11.1"))
+    refute mcp_requirement.satisfied_by?(Gem::Version.new("1.12.0"))
+  end
+
   test "the mcp requirement admits the SDK this suite resolves against" do
     resolved = Gem::Version.new(::MCP::VERSION)
     assert mcp_requirement.satisfied_by?(resolved),

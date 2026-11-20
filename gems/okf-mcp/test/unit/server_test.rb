@@ -64,6 +64,15 @@ class ServerTest < OKF::TestCase
     server.handle_json(JSON.generate(jsonrpc: "2.0", id: 2, method: "tools/list", params: {}))
     assert_equal 2, wrapped
   end
+  test "both request entry points accept the SDK session's dispatch options" do
+    server = OKF::MCP::Server.build(@registry)
+    session = ::MCP::ServerSession.new(server: server, transport: nil)
+    request = { jsonrpc: "2.0", id: 1, method: "ping" }
+
+    assert_equal({}, session.handle(request).fetch(:result))
+    assert_equal({}, JSON.parse(session.handle_json(JSON.generate(request))).fetch("result"))
+  end
+
   test "the okf floor moves with okf's release — 1.13.0 lacks the surfaces this shell reads" do
     # The gemspec carries this as a RELEASE OBLIGATION prose note; this is the
     # tripwire that makes it mechanical. The floor cannot move before okf's

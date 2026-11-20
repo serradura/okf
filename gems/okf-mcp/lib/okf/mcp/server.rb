@@ -159,11 +159,13 @@ module OKF
         # honest bound and the registry re-read made the set movable. Anything
         # the registry no longer names is dropped here, so a repointed entry
         # stops retaining the bundle its slug used to mean.
-        def handle(request, session: nil)
+        # The SDK owns dispatch arguments, including auth_info from 1.11.
+        # Preserve them while wrapping the whole request.
+        def handle(...)
           in_request { super }
         end
 
-        def handle_json(request, session: nil)
+        def handle_json(...)
           in_request { super }
         end
 
