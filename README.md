@@ -25,6 +25,11 @@
   <b><a href="https://docker.okfgem.com">Docker image</a></b>
 </p>
 
+<p align="center">
+  <b>English</b> &nbsp;·&nbsp;
+  <a href="README.pt-BR.md">Português (Brasil)</a>
+</p>
+
 Your coding agent works out how your system fits together — why the service
 exists, what the metric actually measures, which line of the schema is
 load-bearing — and then the session ends and all of it is gone. Next session it
