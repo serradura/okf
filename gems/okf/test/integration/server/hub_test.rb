@@ -154,9 +154,40 @@ class OKF::Server::HubTest < OKF::TestCase
     assert_equal 200, last_response.status
     assert_includes last_response.body, "No bundles registered"
     refute_includes last_response.body, "http://", "the landing makes no external requests"
+    assert_security_headers(html: true)
+  end
+
+  test "hub redirects, JSON endpoints, denied writes and 404 HTML pages carry security headers" do
+    @app = OKF::Server::Hub.new([ bundle("only", "Only") ])
+
+    get "/"
+    assert_equal 302, last_response.status
+    assert_security_headers(html: false)
+
+    get "/search", q: "hi"
+    assert_equal 200, last_response.status
+    assert_security_headers(html: false)
+
+    post "/registry/remove"
+    assert_equal 403, last_response.status
+    assert_security_headers(html: false)
+
+    get "/b/missing/"
+    assert_equal 404, last_response.status
+    assert_security_headers(html: true)
   end
 
   private
+
+  def assert_security_headers(html:)
+    assert_equal "nosniff", last_response.headers["x-content-type-options"]
+    assert_equal "no-referrer", last_response.headers["referrer-policy"]
+    if html
+      assert_equal OKF::Server::App::HTML_CSP, last_response.headers["content-security-policy"]
+    else
+      assert_nil last_response.headers["content-security-policy"]
+    end
+  end
 
   def bundle(slug, title)
     dir = File.join(@root, slug)

@@ -57,6 +57,32 @@ module OKF
       # hit and an in-page search rank alike instead of nearly alike.
       SEARCH_ENGINE = :index
 
+      # Defense-in-depth headers shared by both App and Hub so standalone and
+      # multi-bundle servers enforce the same boundary. The HTML policy matches
+      # template.html.erb's <meta> CSP plus `frame-ancestors 'none'` (which
+      # browsers ignore in <meta>), locking scripts to jsDelivr + SRI and
+      # blocking outbound fetch/XHR (`connect-src 'self'`) and external images.
+      HTML_CSP = [
+        "default-src 'self'",
+        "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net",
+        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+        "img-src 'self' data: blob:",
+        "font-src 'self' data: https://fonts.gstatic.com",
+        "connect-src 'self'",
+        "object-src 'none'",
+        "base-uri 'none'",
+        "form-action 'self'",
+        "frame-ancestors 'none'"
+      ].join("; ").freeze
+
+      SECURITY_HEADERS = {
+        "x-content-type-options" => "nosniff",
+        "referrer-policy" => "no-referrer"
+      }.freeze
+
+      # Applied to every HTML response (page, Hub landing, and HTML 404).
+      HTML_SECURITY_HEADERS = SECURITY_HEADERS.merge("content-security-policy" => HTML_CSP).freeze
+
       # The /search payload, defined once because two hosts answer it: this one
       # bundle, or every bundle the hub hosts. The only difference is the corpus
       # handed in — and a nil slug drops the `slug` key from a row, so a
@@ -131,7 +157,7 @@ module OKF
 
       # The 404 both this app and the Hub answer with, so the two cannot drift.
       def self.not_found
-        [ 404, { "content-type" => "text/plain; charset=utf-8" }, [ "not found\n" ] ]
+        [ 404, SECURITY_HEADERS.merge("content-type" => "text/plain; charset=utf-8"), [ "not found\n" ] ]
       end
 
       private
@@ -244,7 +270,10 @@ module OKF
       end
 
       def respond(content_type, body)
-        [ 200, { "content-type" => content_type }, [ body.to_s ] ]
+        headers = (content_type.start_with?("text/html") ? HTML_SECURITY_HEADERS : SECURITY_HEADERS).merge(
+          "content-type" => content_type
+        )
+        [ 200, headers, [ body.to_s ] ]
       end
 
       # Built on the first search and held for the life of the app, the way the

@@ -21,11 +21,14 @@
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='24' fill='%231a1a1a'/><polygon points='38,44 62,44 50,82' fill='%237a0a1e'/><polygon points='18,44 38,44 50,82' fill='%23a8112c'/><polygon points='62,44 82,44 50,82' fill='%23a8112c'/><polygon points='35,28 18,44 38,44' fill='%23dc1e3c'/><polygon points='65,28 82,44 62,44' fill='%23dc1e3c'/><polygon points='35,28 65,28 62,44 38,44' fill='%23f43f5e'/><polygon points='36,29 49,29 42,42' fill='%23fff' opacity='.38'/><polygon points='35,28 65,28 82,44 50,82 18,44' fill='none' stroke='%23ff6b7f' stroke-width='2' stroke-linejoin='round'/></svg>">
 <script>/* Resolve theme before first paint so there is no flash. */
 (function(){try{var t=localStorage.getItem('okf-theme')||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+<!-- Mirrors OKF::Server::App::HTML_CSP without frame-ancestors (invalid in <meta>) so baked
+     `okf render` pages keep the same script/network boundary offline. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob:; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/cytoscape@3.30.2/dist/cytoscape.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/marked@14/marked.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/dompurify@3/dist/purify.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/cytoscape@3.30.2/dist/cytoscape.min.js" integrity="sha384-IWROdLKRsN1UuJywMlWl7/blXQ8GEooN2n7dzTxfEPd7ybYIKCUJ2Ol/1Gpf3YV4" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/marked@14.1.4/marked.min.js" integrity="sha384-lqPzN0kmFw9t2syAMwVPM4VbAyqsz/lPyYWbb2Xt6nSPM0WPNrpSWCUBgdcAdgnC" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/dompurify@3.4.18/dist/purify.min.js" integrity="sha384-lkArbWjiZKuE+bzKbj1vOEF7DKYBDNvgwZMCt5OH8bdRB92zpzyNska9Q/XKPHQD" crossorigin="anonymous"></script>
 <style>
 /* ═══ CSS sections, in file order ═══════════════════════════════════════════
    Each is opened by a `── name ──` banner; `grep -n '── ' template.html.erb`
@@ -1416,8 +1419,7 @@ cy.on('mouseout','node',()=>cyEl.style.cursor='');
 
 /* ── Mermaid (lazy) ── */
 let _mermaid=null;
-function loadMermaid(){return _mermaid||(_mermaid=new Promise((res,rej)=>{const s=document.createElement('script');
- s.src='https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js';s.onload=()=>{window.mermaid.initialize({startOnLoad:false,securityLevel:'strict',theme:isDark()?'dark':'default'});res(window.mermaid);};s.onerror=rej;document.head.appendChild(s);}));}
+function loadMermaid(){return _mermaid||(_mermaid=loadScript('https://cdn.jsdelivr.net/npm/mermaid@11.17.2/dist/mermaid.min.js','sha384-EOXBFmc3gx5mb+vn0vPvvGqACToJD24hhacX5Yx+8NUUQrHIle/Qi5Bg9o3zKwW2').then(()=>{window.mermaid.initialize({startOnLoad:false,securityLevel:'strict',theme:isDark()?'dark':'default'});return window.mermaid;}));}
 let mermaidSeq=0;
 function processMermaid(el){const blocks=[...el.querySelectorAll('code.language-mermaid')];if(!blocks.length)return;
  loadMermaid().then(m=>{const nodes=[];blocks.forEach(b=>{const pre=b.closest('pre');const d=document.createElement('div');
@@ -1434,7 +1436,7 @@ function renderMarkdown(el,text){el.innerHTML=text?DOMPurify.sanitize(marked.par
 /* ── fullscreen diagram viewer — Panzoom (lazy, like Mermaid): click a rendered
    diagram to inspect it full screen; drag pans, wheel or pinch zooms. ── */
 let _panzoom=null;
-function loadPanzoom(){return _panzoom||(_panzoom=loadScript('https://cdn.jsdelivr.net/npm/@panzoom/panzoom@4/dist/panzoom.min.js').then(()=>window.Panzoom));}
+function loadPanzoom(){return _panzoom||(_panzoom=loadScript('https://cdn.jsdelivr.net/npm/@panzoom/panzoom@4.6.2/dist/panzoom.min.js','sha384-irdz3GZoyr9anVd5nSLy63Z39tLtMTNQFFKxhx/KM08C8NkKpZre6M/m4QCUeeB3').then(()=>window.Panzoom));}
 const dgv=document.getElementById('dgv'),dgvStage=document.getElementById('dgv-stage'),dgvPan=document.getElementById('dgv-pan');
 let dgvPz=null,dgvBack=null,dgvSeq=0;
 function openDiagram(m){const src=m.dataset.src;if(!src||!m.querySelector('svg'))return;
@@ -1844,14 +1846,15 @@ document.getElementById('filters-reset').onclick=()=>{clearSets();syncFilterChip
 /* ── layout: 5 built-ins + extension layouts loaded lazily on first use ── */
 const layoutSel=document.getElementById('layout');
 const LAYOUT_EXT={
- fcose:{srcs:['https://cdn.jsdelivr.net/npm/layout-base@2.0.1/layout-base.js','https://cdn.jsdelivr.net/npm/cose-base@2.2.0/cose-base.js','https://cdn.jsdelivr.net/npm/cytoscape-fcose@2.2.0/cytoscape-fcose.js'],reg:'cytoscapeFcose'},
- dagre:{srcs:['https://cdn.jsdelivr.net/npm/dagre@0.8.5/dist/dagre.min.js','https://cdn.jsdelivr.net/npm/cytoscape-dagre@2.5.0/cytoscape-dagre.min.js'],reg:'cytoscapeDagre'},
- cola:{srcs:['https://cdn.jsdelivr.net/npm/webcola@3.4.0/WebCola/cola.min.js','https://cdn.jsdelivr.net/npm/cytoscape-cola@2.5.1/cytoscape-cola.min.js'],reg:'cytoscapeCola'}
+ fcose:{srcs:[['https://cdn.jsdelivr.net/npm/layout-base@2.0.1/layout-base.js','sha384-5E2lB9AIGE6LRCnOOSTnZRlYZFZ01iMeN2fw97Z1r4Z/kXALxKw2AC+ZzQqoeDsG'],['https://cdn.jsdelivr.net/npm/cose-base@2.2.0/cose-base.js','sha384-RswRBkrMsPUYpJLbZ1CVA08zbNzAkykE2oGJTujBwfjWNdfxv2WVjLJNqv1LhAOp'],['https://cdn.jsdelivr.net/npm/cytoscape-fcose@2.2.0/cytoscape-fcose.js','sha384-uk5Wbjq1+KqUdHO30w7N7GrEGdzBhaJeW9o/ANF6v9+yx3M/cBmoX51C000JNCUf']],reg:'cytoscapeFcose'},
+ dagre:{srcs:[['https://cdn.jsdelivr.net/npm/dagre@0.8.5/dist/dagre.min.js','sha384-2IH3T69EIKYC4c+RXZifZRvaH5SRUdacJW7j6HtE5rQbvLhKKdawxq6vpIzJ7j9M'],['https://cdn.jsdelivr.net/npm/cytoscape-dagre@2.5.0/cytoscape-dagre.min.js','sha384-EHCdyFVbhtbpgI+4x7ETlZUvJwOkxJublmhTpH114NSk3fqfiUgcLl6pQm8JQwg9']],reg:'cytoscapeDagre'},
+ cola:{srcs:[['https://cdn.jsdelivr.net/npm/webcola@3.4.0/WebCola/cola.min.js','sha384-o4yPeUKY7q5q4fuMcFuJWSBJPJgSHtssnfVZvjNRGOEuBwT8zxXnzyGJcy5Ojpeo'],['https://cdn.jsdelivr.net/npm/cytoscape-cola@2.5.1/cytoscape-cola.min.js','sha384-pRiqU+iC8PbMgkJqurjAuor4RP4wCpp80OFOW+3uM9gM9TiyH4I2nWWnHpii03dX']],reg:'cytoscapeCola'}
 };
 const loadedExt={};
-function loadScript(src){return new Promise((res,rej)=>{const s=document.createElement('script');s.src=src;s.onload=res;s.onerror=()=>rej(new Error(src));document.head.appendChild(s);});}
+/* Lazy-load a pinned CDN script and verify its SRI digest before execution. */
+function loadScript(src,integrity){return new Promise((res,rej)=>{const s=document.createElement('script');s.src=src;if(integrity){s.integrity=integrity;s.crossOrigin='anonymous';}s.onload=res;s.onerror=()=>rej(new Error(src));document.head.appendChild(s);});}
 async function ensureLayout(name){const ext=LAYOUT_EXT[name];if(!ext||loadedExt[name])return true;
- try{for(const src of ext.srcs)await loadScript(src);cytoscape.use(window[ext.reg]);loadedExt[name]=true;return true;}
+ try{for(const [src,integrity] of ext.srcs)await loadScript(src,integrity);cytoscape.use(window[ext.reg]);loadedExt[name]=true;return true;}
  catch(e){console.warn('layout '+name+' failed to load',e);return false;}}
 /* Labels count as part of a node's footprint (nodeDimensionsIncludeLabels) —
    the captions here run 3-6x wider than the circles, so spacing by the circle
@@ -2307,7 +2310,7 @@ document.querySelectorAll('.rail-item').forEach(b=>b.onclick=()=>{
    (title>id>tags>type=description>body). Until it is ready — or if the CDN is
    unreachable — ftMatch returns null and each view keeps its substring filter,
    so the box is never dead. */
-function loadMiniSearch(){return _MiniSearch||(_MiniSearch=loadScript('https://cdn.jsdelivr.net/npm/minisearch@7.2.0/dist/umd/index.js').then(()=>window.MiniSearch));}
+function loadMiniSearch(){return _MiniSearch||(_MiniSearch=loadScript('https://cdn.jsdelivr.net/npm/minisearch@7.2.0/dist/umd/index.js','sha384-KuHy7eg9MqWBVrMXJC0WN6q4d3+KBquZ3Htgex79A4REptrDvGOXfAgZ0VOJ1Mdx').then(()=>window.MiniSearch));}
 function buildFtIndex(){return ftIndex?Promise.resolve(ftIndex):(ftBuilding||(ftBuilding=Promise.all([loadMiniSearch(),getCatalog()]).then(([MiniSearch,list])=>{
  const idx=new MiniSearch({idField:'id',fields:FT_FIELDS,storeFields:['id'],
   extractField:(doc,f)=>f==='tags'?(doc.tags||[]).join(' '):f==='body'?((EMBED&&EMBED.bodies[doc.id])||''):f==='sources'?((EMBED&&EMBED.sources[doc.id])||''):(doc[f]==null?'':String(doc[f])),

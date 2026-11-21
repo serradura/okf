@@ -305,6 +305,22 @@ class OKF::Server::AppTest < OKF::TestCase
       "one concept, one answer — whatever the row prints, the meta carries"
   end
 
+  test "HTML, JSON, markdown and 404 responses carry security headers" do
+    get "/"
+    assert_equal 200, last_response.status
+    assert_equal "nosniff", last_response.headers["x-content-type-options"]
+    assert_equal "no-referrer", last_response.headers["referrer-policy"]
+    assert_equal OKF::Server::App::HTML_CSP, last_response.headers["content-security-policy"]
+
+    [ [ 200, "/catalog" ], [ 200, "/node?id=tables/orders" ], [ 404, "/unknown" ] ].each do |status, path|
+      get path
+      assert_equal status, last_response.status
+      assert_equal "nosniff", last_response.headers["x-content-type-options"]
+      assert_equal "no-referrer", last_response.headers["referrer-policy"]
+      assert_nil last_response.headers["content-security-policy"]
+    end
+  end
+
   private
 
   def write(path, content)
